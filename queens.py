@@ -89,7 +89,7 @@ class QueensState:
     def queens(self) -> list[Position]:
         """Returns a list of the positions in which queens appear on the chessboard,
         arranged in no particular order."""
-        return self._queens
+        return list(self._queens)
 
 
     def has_queen(self, position: Position) -> bool:
@@ -111,7 +111,7 @@ class QueensState:
         """Builds a new QueensState with queens added in the given positions,
         without modifying 'self' in any way.  Raises a DuplicateQueenError when
         there is already a queen in at least one of the given positions."""
-        new_positions = positions
+        new_positions = list(positions)
         new_positions.extend(self._queens)
         new_positions = tuple(new_positions)
         return QueensState(self._rows, self._columns, new_positions)
@@ -121,15 +121,16 @@ class QueensState:
         """Builds a new QueensState with queens removed from the given positions,
         without modifying 'self' in any way.  Raises a MissingQueenError when there
         is no queen in at least one of the given positions."""
-        new_positions = self._queens
+        new_positions = []
         for position in positions:
-            if position in new_positions:
-                new_positions.remove(position)
-            else:
+            if not self.has_queen(position):
                 raise MissingQueenError(position)
 
-        new_positions = tuple(self._queens)
-        return QueensState(self._rows, self._columns, new_positions)
+        for queen in self._queens:
+            if queen not in positions:
+                new_positions.append(queen)
+
+        return QueensState(self._rows, self._columns, tuple(new_positions))
 
     def _check_across(self, x: int, y: int, check_rows: bool) -> bool:
         """Helper method to check across either each row or column of the board
