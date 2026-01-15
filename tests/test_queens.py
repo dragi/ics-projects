@@ -11,7 +11,9 @@
 # like "test_queen_count", since it doesn't entirely test the "queen_count" method,
 # but instead focuses on just one aspect of how it behaves.  You'll want to do likewise.
 
+
 from queens import QueensState
+from queens import Position
 import unittest
 
 
@@ -21,7 +23,9 @@ class TestQueensState(unittest.TestCase):
         state = QueensState(8, 8)
         self.assertEqual(state.queen_count(), 0)
 
-
+    def test_queen_count_increases_if_there_are_queens(self):
+        state = QueensState(8, 8, (Position(1,1), Position(3,1)))
+        self.assertEqual(state.queen_count(), 2)
 
 if __name__ == '__main__':
     unittest.main()

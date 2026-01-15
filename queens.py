@@ -63,15 +63,15 @@ class QueensState:
     """Immutably represents the state of a chessboard being used to assist in
     solving the n-queens problem."""
 
-    def __init__(self, rows: int, columns: int):
+    def __init__(self, rows: int, columns: int, queens: tuple[Position, ...] = ()):
         """Initializes the chessboard to have the given numbers of rows and columns,
-        with no queens occupying any of its cells."""
-        pass
+        with no queens occupying any of its cells unless specified."""
+        self._queens = queens
 
 
     def queen_count(self) -> int:
         """Returns the number of queens on the chessboard."""
-        return 0
+        return len(self._queens)
 
 
     def queens(self) -> list[Position]:
