@@ -13,6 +13,7 @@
 
 
 from queens import QueensState
+from queens import DuplicateQueenError
 from queens import Position
 import unittest
 
@@ -24,7 +25,7 @@ class TestQueensState(unittest.TestCase):
         self.assertEqual(state.queen_count(), 0)
 
     def test_queen_count_increases_if_there_are_queens(self):
-        state = QueensState(8, 8, (Position(1,1), Position(3,1)))
+        state = QueensState(8, 8, (Position(1, 1), Position(3, 1)))
         self.assertEqual(state.queen_count(), 2)
 
     def test_has_queen_is_true_if_queen_occupies_given_position(self):
@@ -34,6 +35,14 @@ class TestQueensState(unittest.TestCase):
     def test_has_queen_is_false_if_queen_doesnt_occupy_given_position(self):
         state = QueensState(6, 10, (Position(4, 3), Position(3, 1)))
         self.assertEqual(state.has_queen(Position(2,2)), False)
+
+    def test_duplicate_positions_causes_error(self):
+        with self.assertRaises(DuplicateQueenError):
+            state = QueensState(5, 5, (Position(3, 3), Position(2, 1), Position(3, 3)))
+
+    def test_out_of_bounds_positions_causes_error(self):
+        with self.assertRaises(IndexError):
+            state = QueensState(2, 2, (Position(1, 0), Position(2, 2)))
 
 if __name__ == '__main__':
     unittest.main()

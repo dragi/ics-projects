@@ -66,7 +66,19 @@ class QueensState:
     def __init__(self, rows: int, columns: int, queens: tuple[Position, ...] = ()):
         """Initializes the chessboard to have the given numbers of rows and columns,
         with no queens occupying any of its cells unless specified."""
-        self._queens = queens
+        self._rows = rows
+        self._columns = columns
+        self._queens = []
+
+        for queen in queens:
+            if self.has_queen(queen):
+                raise DuplicateQueenError(queen)
+            elif queen.row >= self._rows:
+                raise IndexError(f'Specified row ({queen.row}) is out of range.')
+            elif queen.column >= self._columns:
+                raise IndexError(f'Specified column ({queen.column}) is out of range.')
+            else:
+                self._queens.append(queen)
 
 
     def queen_count(self) -> int:
@@ -77,7 +89,7 @@ class QueensState:
     def queens(self) -> list[Position]:
         """Returns a list of the positions in which queens appear on the chessboard,
         arranged in no particular order."""
-        return list(self._queens)
+        return self._queens
 
 
     def has_queen(self, position: Position) -> bool:
