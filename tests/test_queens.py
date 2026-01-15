@@ -44,5 +44,17 @@ class TestQueensState(unittest.TestCase):
         with self.assertRaises(IndexError):
             state = QueensState(2, 2, (Position(1, 0), Position(2, 2)))
 
+    def test_with_queens_added_works_with_valid_input(self):
+        state = QueensState(4, 5, (Position(2, 0), Position(3, 0)))
+        new_state = state.with_queens_added([Position(1,0), Position(1,1)])
+        positions = [Position(2, 0), Position(3, 0), Position(1,0), Position(1,1)]
+        self.assertEqual(sorted(new_state.queens()), sorted(positions))
+
+    def test_with_queens_added_causes_error_with_invalid_input(self):
+        with self.assertRaises(DuplicateQueenError):
+            state = QueensState(4, 4, (Position(2, 1), Position(3, 2)))
+            new_state = state.with_queens_added([Position(2,0), Position(3,2)])
+
+
 if __name__ == '__main__':
     unittest.main()

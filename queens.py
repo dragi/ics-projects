@@ -111,7 +111,10 @@ class QueensState:
         """Builds a new QueensState with queens added in the given positions,
         without modifying 'self' in any way.  Raises a DuplicateQueenError when
         there is already a queen in at least one of the given positions."""
-        pass
+        new_positions = positions
+        new_positions.extend(self._queens)
+        new_positions = tuple(new_positions)
+        return QueensState(self._rows, self._columns, new_positions)
 
 
     def with_queens_removed(self, positions: list[Position]) -> Self:
