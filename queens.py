@@ -95,16 +95,16 @@ class QueensState:
     def has_queen(self, position: Position) -> bool:
         """Returns True if a queen occupies the given position on the chessboard, or
         False otherwise."""
-        for queen in self._queens:
-            if position == queen:
-                return True
-        return False
+        return position in self._queens
 
 
     def any_queens_unsafe(self) -> bool:
         """Returns True if any queens on the chessboard are unsafe (i.e., they can
         be captured by at least one other queen on the chessboard), or False otherwise."""
-        pass
+        same_row = self._check_across(self._rows, self._columns, True)
+        same_col = self._check_across(self._columns, self._rows, False)
+        # same_diagonal = self._check_diagonals(self._rows, self._columns)
+        return same_row or same_col # or same_diagonal
 
 
     def with_queens_added(self, positions: list[Position]) -> Self:
@@ -130,3 +130,25 @@ class QueensState:
 
         new_positions = tuple(self._queens)
         return QueensState(self._rows, self._columns, new_positions)
+
+    def _check_across(self, x: int, y: int, check_rows: bool) -> bool:
+        """Helper method to check across either each row or column of the board
+        for multiple queens. If multiple are found, return True, while if they are not,
+        return False."""
+        for i in range(x):
+            count = 0
+            for j in range(y):
+                position = Position(j, i)
+                if check_rows:
+                    position = Position(i, j)
+                if self.has_queen(position):
+                    count += 1
+            if count > 1:
+                return True
+        return False
+
+    def _check_diagonals(self, rows: int, cols: int) -> bool:
+        """Helper method to check across each diagonal of the board
+        for multiple queens. If multiple are found, return True, while if they are not,
+        return False."""
+        pass

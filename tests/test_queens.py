@@ -67,6 +67,18 @@ class TestQueensState(unittest.TestCase):
             state = QueensState(8, 5, (Position(3, 2), Position(4, 1), Position(3, 0)))
             new_state = state.with_queens_removed([Position(3, 2), Position(4, 0)])
 
+    def test_any_queens_unsafe_with_multiple_queens_in_same_row(self):
+        state = QueensState(5, 5, (Position(0, 4), Position(3, 1), Position(1, 4)))
+        self.assertEqual(state.any_queens_unsafe(), True)
+
+    def test_any_queens_unsafe_with_multiple_queens_in_same_col(self):
+        state = QueensState(5, 5, (Position(4, 0), Position(3, 1), Position(4, 1)))
+        self.assertEqual(state.any_queens_unsafe(), True)
+
+    def test_any_queens_unsafe_with_just_one_queen(self):
+        state = QueensState(5, 5, (Position(0, 4),))
+        self.assertEqual(state.any_queens_unsafe(), False)
+
 
 if __name__ == '__main__':
     unittest.main()
