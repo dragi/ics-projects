@@ -27,5 +27,13 @@ class TestQueensState(unittest.TestCase):
         state = QueensState(8, 8, (Position(1,1), Position(3,1)))
         self.assertEqual(state.queen_count(), 2)
 
+    def test_has_queen_is_true_if_queen_occupies_given_position(self):
+        state = QueensState(4, 4, (Position(2, 2), Position(1, 0)))
+        self.assertEqual(state.has_queen(Position(1,0)), True)
+
+    def test_has_queen_is_false_if_queen_doesnt_occupy_given_position(self):
+        state = QueensState(6, 10, (Position(4, 3), Position(3, 1)))
+        self.assertEqual(state.has_queen(Position(2,2)), False)
+
 if __name__ == '__main__':
     unittest.main()

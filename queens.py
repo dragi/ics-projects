@@ -77,13 +77,16 @@ class QueensState:
     def queens(self) -> list[Position]:
         """Returns a list of the positions in which queens appear on the chessboard,
         arranged in no particular order."""
-        pass
+        return list(self._queens)
 
 
     def has_queen(self, position: Position) -> bool:
         """Returns True if a queen occupies the given position on the chessboard, or
         False otherwise."""
-        pass
+        for queen in self._queens:
+            if position == queen:
+                return True
+        return False
 
 
     def any_queens_unsafe(self) -> bool:
