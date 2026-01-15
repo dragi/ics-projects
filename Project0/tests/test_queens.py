@@ -103,6 +103,20 @@ class TestQueensState(unittest.TestCase):
         state = QueensState(4, 4, (Position(0, 0), Position(0, 3), Position(3, 0), Position(3, 3)))
         self.assertEqual(state.any_queens_unsafe(), True)
 
+    def test_out_of_bounds_column_causes_error(self):
+        with self.assertRaises(IndexError):
+            state = QueensState(5, 5, (Position(2, 1), Position(1, 5)))
+
+    def test_missing_queen_error_string_representation(self):
+        with self.assertRaises(MissingQueenError) as context:
+            state = QueensState(5, 5, (Position(2, 1),))
+            state.with_queens_removed([Position(3, 3)])
+        self.assertEqual(str(context.exception), 'missing queen in row 3 column 3')
+
+    def test_duplicate_queen_error_string_representation(self):
+        with self.assertRaises(DuplicateQueenError) as context:
+            state = QueensState(5, 5, (Position(2, 1), Position(2, 1)))
+        self.assertEqual(str(context.exception), 'duplicate queen in row 2 column 1')
 
 
 if __name__ == '__main__':

@@ -40,10 +40,8 @@ class DuplicateQueenError(Exception):
         """Initializes the exception, given a position where the duplicate queen exists."""
         self._position = position
 
-
     def __str__(self) -> str:
         return f'duplicate queen in row {self._position.row} column {self._position.column}'
-
 
 
 class MissingQueenError(Exception):
@@ -53,10 +51,8 @@ class MissingQueenError(Exception):
         """Initializes the exception, given a position where a queen is missing."""
         self._position = position
 
-
     def __str__(self) -> str:
         return f'missing queen in row {self._position.row} column {self._position.column}'
-
 
 
 class QueensState:
@@ -177,17 +173,6 @@ class QueensState:
         for start_col in range(cols):
             count = 0
             row, col = 0, start_col
-            while row < rows and col >= 0:
-                if self.has_queen(Position(row, col)):
-                    count += 1
-                row += 1
-                col -= 1
-            if count > 1:
-                return True
-
-        for start_row in range(1, rows):
-            count = 0
-            row, col = start_row, cols - 1
             while row < rows and col >= 0:
                 if self.has_queen(Position(row, col)):
                     count += 1
