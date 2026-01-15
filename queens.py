@@ -103,8 +103,8 @@ class QueensState:
         be captured by at least one other queen on the chessboard), or False otherwise."""
         same_row = self._check_across(self._rows, self._columns, True)
         same_col = self._check_across(self._columns, self._rows, False)
-        # same_diagonal = self._check_diagonals(self._rows, self._columns)
-        return same_row or same_col # or same_diagonal
+        same_diagonal = self._check_diagonals(self._rows, self._columns)
+        return same_row or same_col or same_diagonal
 
 
     def with_queens_added(self, positions: list[Position]) -> Self:
@@ -151,4 +151,48 @@ class QueensState:
         """Helper method to check across each diagonal of the board
         for multiple queens. If multiple are found, return True, while if they are not,
         return False."""
-        pass
+        for start_col in range(cols):
+            count = 0
+            row, col = 0, start_col
+            while row < rows and col < cols:
+                if self.has_queen(Position(row, col)):
+                    count += 1
+                row += 1
+                col += 1
+            if count > 1:
+                return True
+
+        for start_row in range(1, rows):
+            count = 0
+            row, col = start_row, 0
+            while row < rows and col < cols:
+                if self.has_queen(Position(row, col)):
+                    count += 1
+                row += 1
+                col += 1
+            if count > 1:
+                return True
+
+        for start_col in range(cols):
+            count = 0
+            row, col = 0, start_col
+            while row < rows and col >= 0:
+                if self.has_queen(Position(row, col)):
+                    count += 1
+                row += 1
+                col -= 1
+            if count > 1:
+                return True
+
+        for start_row in range(1, rows):
+            count = 0
+            row, col = start_row, cols - 1
+            while row < rows and col >= 0:
+                if self.has_queen(Position(row, col)):
+                    count += 1
+                row += 1
+                col -= 1
+            if count > 1:
+                return True
+
+        return False

@@ -79,6 +79,21 @@ class TestQueensState(unittest.TestCase):
         state = QueensState(5, 5, (Position(0, 4),))
         self.assertEqual(state.any_queens_unsafe(), False)
 
+    def test_any_queens_unsafe_with_multiple_queens_on_main_diagonal(self):
+        state = QueensState(5, 5, (Position(0, 0), Position(2, 2), Position(4, 4)))
+        self.assertEqual(state.any_queens_unsafe(), True)
+
+    def test_any_queens_unsafe_with_multiple_queens_on_anti_diagonal(self):
+        state = QueensState(5, 5, (Position(0, 4), Position(1, 3), Position(3, 1)))
+        self.assertEqual(state.any_queens_unsafe(), True)
+
+    def test_any_queens_unsafe_with_multiple_queens_on_offset_diagonal(self):
+        state = QueensState(6, 6, (Position(1, 0), Position(2, 1), Position(4, 3)))
+        self.assertEqual(state.any_queens_unsafe(), True)
+
+    def test_any_queens_unsafe_with_safe_queens(self):
+        state = QueensState(4, 4, (Position(0, 1), Position(1, 3), Position(2, 0), Position(3, 2)))
+        self.assertEqual(state.any_queens_unsafe(), False)
 
 if __name__ == '__main__':
     unittest.main()
