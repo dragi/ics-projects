@@ -95,5 +95,15 @@ class TestQueensState(unittest.TestCase):
         state = QueensState(4, 4, (Position(0, 1), Position(1, 3), Position(2, 0), Position(3, 2)))
         self.assertEqual(state.any_queens_unsafe(), False)
 
+    def test_any_queens_unsafe_with_no_queens(self):
+        state = QueensState(5, 5)
+        self.assertEqual(state.any_queens_unsafe(), False)
+
+    def test_queens_at_corners_and_edges(self):
+        state = QueensState(4, 4, (Position(0, 0), Position(0, 3), Position(3, 0), Position(3, 3)))
+        self.assertEqual(state.any_queens_unsafe(), True)
+
+
+
 if __name__ == '__main__':
     unittest.main()
