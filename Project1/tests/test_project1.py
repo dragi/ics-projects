@@ -18,5 +18,10 @@ class Project1Test(unittest.TestCase):
         self.assertEqual(sim.devices['3'].device_id, 3)
         self.assertEqual(sim.devices['4'].device_id, 4)
 
+    def test_simulation_length(self):
+        sim = Simulation(Path('samples/sample_input.txt'))
+        sim.read_file()
+        self.assertEqual(sim.length, 9999)
+
 if __name__ == '__main__':
     unittest.main()
