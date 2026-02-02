@@ -81,6 +81,17 @@ class Project1Test(unittest.TestCase):
         test_devices['2'] = device
 
         device.receive_alert(1, 'Test', 100, test_queue)
+        self.assertEqual(len(test_queue), 1)
+
+    def test_receive_alert_does_not_forward_if_cancelled(self):
+        test_queue = defaultdict(list)
+        device = Device(2)
+        device.recipient_list = [(3, 100)]
+        device.cancelled_messages = ['Test']
+
+        device.receive_alert(1, 'Test', 100, test_queue)
+
+        self.assertIn('Test', device.message_list)
         self.assertEqual(len(test_queue), 0)
 
     def test_cancellation_sending(self):
@@ -113,6 +124,7 @@ class Project1Test(unittest.TestCase):
         test_devices['2'] = device
 
         device.receive_cancellation(1, 'Test', 1000, test_queue)
+
         self.assertEqual(len(test_queue), 0)
         self.assertNotIn('Test', device.cancelled_messages)
 
