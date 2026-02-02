@@ -67,5 +67,49 @@ class Project1Test(unittest.TestCase):
         device.receive_alert(1, 'Test', 100, test_queue)
         self.assertIn('Test', device.message_list)
 
+    def test_receive_alert_prevents_duplicate_forwarding(self):
+        test_queue = defaultdict(list)
+        test_devices = {}
+        device = Device(2)
+        device.recipient_list = [(3, 100)]
+        device.message_list = ['Test']  # Already has the alert
+        test_devices['2'] = device
+
+        device.receive_alert(1, 'Test', 100, test_queue)
+        self.assertEqual(len(test_queue), 0)
+
+    def test_cancellation_sending(self):
+        test_queue = defaultdict(list)
+        device = Device(1)
+        device.cancel([(2, 500)], 'Test', 1000, test_queue)
+        self.assertEqual(test_queue, {'1500': [('RC', 2, 1, 'Test')]})
+
+    def test_receive_cancellation_forwards_once(self):
+        test_queue = defaultdict(list)
+        test_devices = {}
+        device = Device(2)
+        device.recipient_list = [(3, 100)]
+        device.message_list = ['Test']
+        test_devices['2'] = device
+
+        device.receive_cancellation(1, 'Test', 1000, test_queue)
+        self.assertIn('Test', device.cancelled_messages)
+        self.assertEqual(len(test_queue['1100']), 1)
+
+        test_queue.clear()
+        device.receive_cancellation(3, 'Test', 1200, test_queue)
+        self.assertEqual(len(test_queue), 0)
+
+    def test_receive_cancellation_without_alert(self):
+        test_queue = defaultdict(list)
+        test_devices = {}
+        device = Device(2)
+        device.recipient_list = [(3, 100)]
+        test_devices['2'] = device
+
+        device.receive_cancellation(1, 'Test', 1000, test_queue)
+        self.assertEqual(len(test_queue), 0)
+        self.assertNotIn('Test', device.cancelled_messages)
+
 if __name__ == '__main__':
     unittest.main()
