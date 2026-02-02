@@ -23,5 +23,13 @@ class Project1Test(unittest.TestCase):
         sim.read_file()
         self.assertEqual(sim.length, 9999)
 
+    def test_devices_propagate(self):
+        sim = Simulation(Path('samples/sample_input.txt'))
+        sim.read_file()
+        self.assertEqual(sim.devices['1'].recipients, [(2, 750)])
+        self.assertEqual(sim.devices['2'].recipients, [(3, 1250)])
+        self.assertEqual(sim.devices['3'].recipients, [(4, 500)])
+        self.assertEqual(sim.devices['4'].recipients, [(1, 1000)])
+
 if __name__ == '__main__':
     unittest.main()
