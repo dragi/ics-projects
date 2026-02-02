@@ -31,5 +31,15 @@ class Project1Test(unittest.TestCase):
         self.assertEqual(sim.devices['3'].recipients, [(4, 500)])
         self.assertEqual(sim.devices['4'].recipients, [(1, 1000)])
 
+    def test_alerts_can_be_created(self):
+        sim = Simulation(Path('samples/sample_input.txt'))
+        sim.read_file()
+        self.assertEqual(sim.alert_queue, {'0': [(1, 'Trouble')]})
+
+    def test_alerts_can_be_cancelled(self):
+        sim = Simulation(Path('samples/sample_input.txt'))
+        sim.read_file()
+        self.assertEqual(sim.cancel_queue, {'2200': [(1, 'Trouble')]})
+
 if __name__ == '__main__':
     unittest.main()

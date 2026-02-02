@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections import defaultdict
 
 from device import Device
 
@@ -6,6 +7,8 @@ class Simulation:
     def __init__(self, file_path: Path):
         self.file_path = file_path
         self.devices = dict()
+        self.alert_queue = defaultdict(list)
+        self.cancel_queue = defaultdict(list)
         self.time = 0
         self.length = 1
 
@@ -26,6 +29,10 @@ class Simulation:
                     self.add_device(line)
                 elif instruction == 'P':
                     self.propagate_device(line)
+                elif instruction == 'A':
+                    self.create_alert(line)
+                elif instruction == 'C':
+                    self.cancel_alert(line)
 
                 line = f.readline()
 
@@ -44,3 +51,17 @@ class Simulation:
         recipient = int(line[2])
         delay = int(line[3])
         self.devices[sender].recipients.append((recipient, delay))
+
+    def create_alert(self, line: str) -> None:
+        line = line.split()
+        sender = int(line[1])
+        message = line[2]
+        simulation_time = line[3]
+        self.alert_queue[simulation_time].append((sender, message))
+
+    def cancel_alert(self, line: str) -> None:
+        line = line.split()
+        sender = int(line[1])
+        message = line[2]
+        simulation_time = line[3]
+        self.cancel_queue[simulation_time].append((sender, message))
