@@ -52,8 +52,8 @@ class Project1Test(unittest.TestCase):
         device = Device(5)
         self.assertEqual(device.device_id, 5)
         self.assertEqual(device.recipient_list, [])
-        self.assertEqual(device.message_list, [])
-        self.assertEqual(device.cancelled_messages, [])
+        self.assertEqual(device.message_list, set())
+        self.assertEqual(device.cancelled_messages, {})
 
     def test_multiple_recipients_propagation(self):
         test_queue = defaultdict(list)
@@ -87,7 +87,7 @@ class Project1Test(unittest.TestCase):
         test_queue = defaultdict(list)
         device = Device(2)
         device.recipient_list = [(3, 100)]
-        device.cancelled_messages = ['Test']
+        device.cancelled_messages = {'Test': 50}
 
         device.receive_alert(1, 'Test', 100, test_queue)
 
@@ -118,15 +118,14 @@ class Project1Test(unittest.TestCase):
 
     def test_receive_cancellation_without_alert(self):
         test_queue = defaultdict(list)
-        test_devices = {}
         device = Device(2)
         device.recipient_list = [(3, 100)]
-        test_devices['2'] = device
 
         device.receive_cancellation(1, 'Test', 1000, test_queue)
 
+        self.assertIn('Test', device.cancelled_messages)
+        self.assertEqual(device.cancelled_messages['Test'], 1000)
         self.assertEqual(len(test_queue), 0)
-        self.assertNotIn('Test', device.cancelled_messages)
 
     def test_run_simulation_stops_at_length(self):
         sim = Simulation(Path('asdf'))
@@ -158,12 +157,12 @@ class Project1Test(unittest.TestCase):
     def test_duplicate_messages_prevented(self):
         sim = Simulation(Path('asdf'))
         sim.length = 100
-        sim.devices['1'] = Device(1)
-        sim.alert_queue['5'] = [('A', '1', [], 'Msg'), ('A', '1', [], 'Msg')]
-        sim.alert_queue['10'] = [('C', '1', [], 'Msg'), ('C', '1', [], 'Msg')]
+        sim.devices[1] = Device(1)
+        sim.alert_queue['5'] = [('A', 1, [], 'Msg'), ('A', 1, [], 'Msg')]
+        sim.alert_queue['10'] = [('C', 1, [], 'Msg'), ('C', 1, [], 'Msg')]
         sim.run_simulation()
-        self.assertEqual(sim.devices['1'].message_list.count('Msg'), 1)
-        self.assertEqual(sim.devices['1'].cancelled_messages.count('Msg'), 1)
+        self.assertIn('Msg', sim.devices[1].message_list)
+        self.assertIn('Msg', sim.devices[1].cancelled_messages)
 
 if __name__ == '__main__':
     unittest.main()

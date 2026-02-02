@@ -67,15 +67,17 @@ class Simulation:
     '''The RC branch is not fully covered because the test cases don't create scenarios
     where devices receive cancellations from others during simulation propagation, which
     would require a multi-hop cancellation scenario'''
+
     def run_simulation(self) -> None:
         """Traverses event queue and dynamically updates it based on cancellations and receptions"""
         while self.alert_queue:
-            timestamp = min(self.alert_queue.keys(), key = int)
+            timestamp_key = min(self.alert_queue.keys(), key = int)
+            timestamp = int(timestamp_key)
 
-            if int(timestamp) >= self.length:
+            if timestamp >= self.length:
                 break
 
-            events = self.alert_queue.pop(timestamp)
+            events = self.alert_queue.pop(timestamp_key)
             for event in events:
                 event_type = event[0]
 
@@ -84,25 +86,23 @@ class Simulation:
                     recipients = event[2]
                     message = event[3]
                     if message not in self.devices[sender].message_list:
-                        self.devices[sender].message_list.append(message)
+                        self.devices[sender].message_list.add(message)
                     self.devices[sender].send(recipients, message, timestamp, self.alert_queue)
                 elif event_type == 'C':
                     sender = event[1]
                     recipients = event[2]
                     message = event[3]
                     if message not in self.devices[sender].cancelled_messages:
-                        self.devices[sender].cancelled_messages.append(message)
+                        self.devices[sender].cancelled_messages[message] = timestamp
                     self.devices[sender].cancel(recipients, message, timestamp, self.alert_queue)
                 elif event_type == 'RA':
                     recipient = event[1]
                     sender = event[2]
                     message = event[3]
-                    self.devices[str(recipient)].receive_alert(sender, message, timestamp,
-                        self.alert_queue)
+                    self.devices[str(recipient)].receive_alert(sender, message, timestamp, self.alert_queue)
                 elif event_type == 'RC':
                     recipient = event[1]
                     sender = event[2]
                     message = event[3]
-                    self.devices[str(recipient)].receive_cancellation(sender, message, timestamp,
-                        self.alert_queue)
+                    self.devices[str(recipient)].receive_cancellation(sender, message, timestamp, self.alert_queue)
         print(f'@{self.length}: END')
