@@ -59,15 +59,38 @@ class Simulation:
         self.alert_queue[simulation_time].append((event_type, sender, recipients, message))
 
     def run_simulation(self) -> None:
-        for timestamp in sorted(self.alert_queue.keys()):
-            if int(timestamp) < self.length:
-                for event_type, sender, recipients, message in self.alert_queue[timestamp]:
-                    if event_type == 'A':
-                        self.devices[sender].send(recipients, message, timestamp, self.alert_queue, self.devices)
-                    elif event_type == 'C':
-                        self.devices[sender].cancel(recipients, message, timestamp, self.alert_queue)
-                    elif event_type == 'RA':
-                        self.devices[sender].receive_alert(recipients, message, timestamp)
-                    elif event_type == 'RC':
-                        self.devices[sender].receive_cancellation(recipients, message, timestamp, self.devices)
+        while self.alert_queue:
+            timestamp = min(self.alert_queue.keys(), key = int)
+
+            if int(timestamp) >= self.length:
+                break
+
+            events = self.alert_queue.pop(timestamp)
+            for event in events:
+                event_type = event[0]
+
+                if event_type == 'A':
+                    sender = event[1]
+                    recipients = event[2]
+                    message = event[3]
+                    if message not in self.devices[sender].message_list:
+                        self.devices[sender].message_list.append(message)
+                    self.devices[sender].send(recipients, message, timestamp, self.alert_queue, self.devices)
+                elif event_type == 'C':
+                    sender = event[1]
+                    recipients = event[2]
+                    message = event[3]
+                    if message not in self.devices[sender].cancelled_messages:
+                        self.devices[sender].cancelled_messages.append(message)
+                    self.devices[sender].cancel(recipients, message, timestamp, self.alert_queue)
+                elif event_type == 'RA':
+                    recipient = event[1]
+                    sender = event[2]
+                    message = event[3]
+                    self.devices[str(recipient)].receive_alert(sender, message, timestamp, self.alert_queue, self.devices)
+                elif event_type == 'RC':
+                    recipient = event[1]
+                    sender = event[2]
+                    message = event[3]
+                    self.devices[str(recipient)].receive_cancellation(sender, message, timestamp, self.alert_queue, self.devices)
         print(f'@{self.length}: END')

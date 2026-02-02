@@ -3,23 +3,28 @@ class Device:
         self.device_id = device_id
         self.recipient_list = []
         self.message_list = []
+        self.cancelled_messages = []
 
-    def send(self, recipients: tuple, message: str, timestamp: int, queue: dict, devices: dict):
+    def send(self, recipients: list, message: str, timestamp: int, queue: dict, devices: dict):
         for recipient, delay in recipients:
             time = str(int(timestamp) + delay)
             print(f'@{timestamp}: #{self.device_id} SENT ALERT TO #{recipient}: {message}')
             queue[time].append(('RA', recipient, self.device_id, message))
-            devices[str(recipient)].message_list.append(message)
 
-    def cancel(self, recipients: tuple, message: str, timestamp: int, queue: dict):
+    def cancel(self, recipients: list, message: str, timestamp: int, queue: dict):
         for recipient, delay in recipients:
             time = str(int(timestamp) + delay)
             print(f'@{timestamp}: #{self.device_id} SENT CANCELLATION TO #{recipient}: {message}')
-            queue[time].append(('RC', self.device_id, recipients, message))
+            queue[time].append(('RC', recipient, self.device_id, message))
 
-    def receive_alert(self, recipient: int, message: str, timestamp: int):
-        print(f'@{timestamp}: #{recipient} RECEIVED ALERT FROM #{self.device_id}: {message}')
+    def receive_alert(self, sender: int, message: str, timestamp: int, queue: dict, devices: dict):
+        print(f'@{timestamp}: #{self.device_id} RECEIVED ALERT FROM #{sender}: {message}')
+        if message not in self.message_list:
+            self.message_list.append(message)
+            self.send(self.recipient_list, message, timestamp, queue, devices)
 
-    def receive_cancellation(self, recipient: int, message: str, timestamp: int, devices: dict):
-        print(f'@{timestamp}: #{recipient} RECEIVED CANCELLATION FROM #{self.device_id}: {message}')
-        devices[str(recipient)].message_list.remove(message)
+    def receive_cancellation(self, sender: int, message: str, timestamp: int, queue: dict, devices: dict):
+        print(f'@{timestamp}: #{self.device_id} RECEIVED CANCELLATION FROM #{sender}: {message}')
+        if message in self.message_list and message not in self.cancelled_messages:
+            self.cancelled_messages.append(message)
+            self.cancel(self.recipient_list, message, timestamp, queue)
