@@ -26,20 +26,16 @@ class Project1Test(unittest.TestCase):
     def test_devices_propagate(self):
         sim = Simulation(Path('samples/sample_input.txt'))
         sim.read_file()
-        self.assertEqual(sim.devices['1'].recipients, [(2, 750)])
-        self.assertEqual(sim.devices['2'].recipients, [(3, 1250)])
-        self.assertEqual(sim.devices['3'].recipients, [(4, 500)])
-        self.assertEqual(sim.devices['4'].recipients, [(1, 1000)])
+        self.assertEqual(sim.devices['1'].recipient_list, [(2, 750)])
+        self.assertEqual(sim.devices['2'].recipient_list, [(3, 1250)])
+        self.assertEqual(sim.devices['3'].recipient_list, [(4, 500)])
+        self.assertEqual(sim.devices['4'].recipient_list, [(1, 1000)])
 
     def test_alerts_can_be_created(self):
         sim = Simulation(Path('samples/sample_input.txt'))
         sim.read_file()
-        self.assertEqual(sim.alert_queue, {'0': [(1, 'Trouble')]})
-
-    def test_alerts_can_be_cancelled(self):
-        sim = Simulation(Path('samples/sample_input.txt'))
-        sim.read_file()
-        self.assertEqual(sim.cancel_queue, {'2200': [(1, 'Trouble')]})
+        self.assertEqual(sim.alert_queue, {'0': [('A', '1', [(2, 750)], 'Trouble')],
+             '2200': [('C', '1', [(2, 750)], 'Trouble')]})
 
 if __name__ == '__main__':
     unittest.main()
