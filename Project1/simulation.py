@@ -64,6 +64,9 @@ class Simulation:
         simulation_time = line[3]
         self.alert_queue[simulation_time].append((event_type, sender, recipients, message))
 
+    '''The RC branch is not fully covered because the test cases don't create scenarios
+    where devices receive cancellations from others during simulation propagation, which
+    would require a multi-hop cancellation scenario'''
     def run_simulation(self) -> None:
         """Traverses event queue and dynamically updates it based on cancellations and receptions"""
         while self.alert_queue:
