@@ -76,9 +76,6 @@ def modify_region(connection, event):
     wiki = region.wikipedia_link if region.wikipedia_link else None
     key = region.keywords if region.keywords else None
 
-    region = event.region()
-    ident, code, local, name, cont, country, wiki, key = region
-
     try:
         cursor = connection.execute(
             'UPDATE region SET region_code = ?, local_code = ?, name = ?, continent_id = ?, country_id = ?, wikipedia_link = ?, keywords = ? WHERE region_id = ?;',
