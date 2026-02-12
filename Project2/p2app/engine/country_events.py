@@ -25,7 +25,13 @@ def load_country(connection, event):
         yield ErrorEvent('Country not found')
 
 def save_country(connection, event):
-    ident, code, name, cont, wiki, keywords = event.country()
+    country = event.country()
+    ident = country.country_id()
+    code = country.country_code if country.country_code else None
+    name = country.name if country.name else None
+    cont = country.continent_id
+    wiki = country.wikipedia_link if country.wikipedia_link else None
+    keywords = country.keywords if country.keywords else None
 
     try:
         connection.execute(
@@ -40,7 +46,13 @@ def save_country(connection, event):
 
 
 def modify_country(connection, event):
-    ident, code, name, cont, wiki, keywords = event.country()
+    country = event.country()
+    ident = country.country_id()
+    code = country.country_code if country.country_code else None
+    name = country.name if country.name else None
+    cont = country.continent_id
+    wiki = country.wikipedia_link if country.wikipedia_link else None
+    keywords = country.keywords if country.keywords else None
 
     try:
         cursor = connection.execute(

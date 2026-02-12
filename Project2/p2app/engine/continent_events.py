@@ -26,7 +26,10 @@ def load_continent(connection, event):
         yield ErrorEvent('Continent not found')
 
 def save_continent(connection, event):
-    ident, code, name = event.continent()
+    continent = event.continent()
+    ident = continent.continent_id
+    code = continent.continent_code if continent.continent_code else None
+    name = continent.name if continent.name else None
 
     try:
         connection.execute(
@@ -43,8 +46,8 @@ def save_continent(connection, event):
 def modify_continent(connection, event):
     continent = event.continent()
     ident = continent.continent_id
-    code = continent.continent_code
-    name = continent.name
+    code = continent.continent_code if continent.continent_code else None
+    name = continent.name if continent.name else None
 
     try:
         cursor = connection.execute(

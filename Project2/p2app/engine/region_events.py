@@ -26,7 +26,15 @@ def load_region(connection, event):
         yield ErrorEvent('Region not found')
 
 def save_region(connection, event):
-    ident, code, local, name, cont, country, wiki, key = event.region()
+    region = event.region()
+    ident = region.region_id
+    code = region.region_code if region.region_code else None
+    local = region.local_code if region.local_code else None
+    name = region.name if region.name else None
+    cont = region.continent_id
+    country = region.country_id
+    wiki = region.wikipedia_link if region.wikipedia_link else None
+    key = region.keywords if region.keywords else None
 
     try:
         connection.execute(
@@ -41,6 +49,16 @@ def save_region(connection, event):
 
 
 def modify_region(connection, event):
+    region = event.region()
+    ident = region.region_id
+    code = region.region_code if region.region_code else None
+    local = region.local_code if region.local_code else None
+    name = region.name if region.name else None
+    cont = region.continent_id
+    country = region.country_id
+    wiki = region.wikipedia_link if region.wikipedia_link else None
+    key = region.keywords if region.keywords else None
+
     region = event.region()
     ident, code, local, name, cont, country, wiki, key = region
 
