@@ -7,7 +7,8 @@
 #
 # This is the outermost layer of the part of the program that you'll need to build,
 # which means that YOU WILL DEFINITELY NEED TO MAKE CHANGES TO THIS FILE.
-
+import p2app.events
+import sqlite3
 
 
 class Engine:
@@ -19,14 +20,31 @@ class Engine:
 
     def __init__(self):
         """Initializes the engine"""
-        pass
+        self._connection = None
 
 
     def process_event(self, event):
         """A generator function that processes one event sent from the user interface,
         yielding zero or more events in response."""
+        if isinstance(event, p2app.events.OpenDatabaseEvent):
+            yield from self.open_database(event)
 
-        # This is a way to write a generator function that always yields zero values.
-        # You'll want to remove this and replace it with your own code, once you start
-        # writing your engine, but this at least allows the program to run.
-        yield from ()
+    def open_database(self, event):
+        database_path = event.path()
+        try:
+            self._connection = sqlite3.connect(database_path)
+            cursor = self._connection.execute("SELECT * FROM airport WHERE airport_ident = 'KSNA';")
+            if cursor.fetchone() is not None:
+                yield p2app.events.DatabaseOpenedEvent(database_path)
+            else:
+                yield p2app.events.DatabaseOpenFailedEvent('The database failed to open successfully')
+        except sqlite3.DatabaseError as e:
+            yield p2app.events.DatabaseOpenFailedEvent('The database is invalid or corrupt')
+        except Exception as e:
+            yield p2app.events.DatabaseOpenFailedEvent('An unexpected error occurred')
+
+
+
+
+
+
