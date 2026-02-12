@@ -15,15 +15,14 @@ def initiate_continent_search(connection, event):
         conditions.append('name = ?')
         params.append(name)
     if conditions:
-        where = 'WHERE ' + ' AND '.join(conditions)
+        where = ' AND '.join(conditions)
+        query = f'SELECT continent_id, continent_code, name FROM continent WHERE {where};'
     else:
-        where = ''
+        query = 'SELECT continent_id, continent_code, name FROM continent;'
 
-    cursor = connection.execute(
-        f'SELECT continent_id, continent_code, name FROM continent WHERE {where};',
-        params)
-
+    cursor = connection.execute(query, params)
     rows = cursor.fetchall()
+
     for row in rows:
         yield ContinentSearchResultEvent(Continent(row[0], row[1], row[2]))
 

@@ -16,16 +16,15 @@ def initiate_region_search(connection, event):
         conditions.append('name = ?')
         params.append(name)
     if local:
-        conditions.append('local = ?')
+        conditions.append('local_code = ?')
         params.append(local)
     if conditions:
-        where = 'WHERE ' + ' AND '.join(conditions)
+        where = ' AND '.join(conditions)
+        query = f'SELECT region_id, region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region WHERE {where};'
     else:
-        where = ''
+        query = 'SELECT region_id, region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region;'
 
-    cursor = connection.execute(
-        f'SELECT region_id, region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region WHERE {where};',
-        params)
+    cursor = connection.execute(query, params)
     rows = cursor.fetchall()
 
     for row in rows:

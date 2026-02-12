@@ -16,13 +16,12 @@ def initiate_country_search(connection, event):
         conditions.append('name = ?')
         params.append(name)
     if conditions:
-        where = 'WHERE ' + ' AND '.join(conditions)
+        where = ' AND '.join(conditions)
+        query = f'SELECT country_id, country_code, name, continent_id, wikipedia_link, keywords FROM country WHERE {where};'
     else:
-        where = ''
+        query = 'SELECT country_id, country_code, name, continent_id, wikipedia_link, keywords FROM country;'
 
-    cursor = connection.execute(
-        f'SELECT country_id, country_code, name, continent_id, wikipedia_link, keywords FROM country WHERE {where};',
-        params)
+    cursor = connection.execute(query, params)
 
     rows = cursor.fetchall()
     for row in rows:
@@ -42,7 +41,7 @@ def load_country(connection, event):
 
 def save_country(connection, event):
     country = event.country()
-    ident = country.country_id()
+    ident = country.country_id
     code = country.country_code if country.country_code else None
     name = country.name if country.name else None
     cont = country.continent_id
@@ -63,7 +62,7 @@ def save_country(connection, event):
 
 def modify_country(connection, event):
     country = event.country()
-    ident = country.country_id()
+    ident = country.country_id
     code = country.country_code if country.country_code else None
     name = country.name if country.name else None
     cont = country.continent_id
