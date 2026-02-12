@@ -37,7 +37,7 @@ class Engine:
             yield from initiate_search(self._connection, event)
         elif isinstance(event, LoadContinentEvent):
             yield from load_continent(self._connection, event)
-        elif isinstance(event, SaveNewContinentEvent)
+        elif isinstance(event, SaveNewContinentEvent):
             yield from save_continent(self._connection, event)
         elif isinstance(event, SaveContinentEvent):
             yield from modify_continent(self._connection, event)
@@ -50,13 +50,13 @@ class Engine:
             self._connection.execute('PRAGMA foreign_keys = ON;')
             cursor = self._connection.execute("SELECT * FROM airport WHERE airport_ident = 'KSNA';")
             if cursor.fetchone() is not None:
-                yield p2app.events.DatabaseOpenedEvent(database_path)
+                yield DatabaseOpenedEvent(database_path)
             else:
-                yield p2app.events.DatabaseOpenFailedEvent('The database failed to open successfully')
+                yield DatabaseOpenFailedEvent('The database failed to open successfully')
         except sqlite3.DatabaseError:
-            yield p2app.events.DatabaseOpenFailedEvent('The database is invalid or corrupt')
+            yield DatabaseOpenFailedEvent('The database is invalid or corrupt')
         except Exception:
-            yield p2app.events.DatabaseOpenFailedEvent('An unexpected error occurred')
+            yield DatabaseOpenFailedEvent('An unexpected error occurred')
 
 
 
