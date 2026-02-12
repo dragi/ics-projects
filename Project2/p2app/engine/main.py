@@ -10,6 +10,7 @@
 from p2app.events import *
 from p2app.engine.continent_events import *
 from p2app.engine.country_events import *
+from p2app.engine.region_events import *
 import sqlite3
 
 
@@ -57,7 +58,14 @@ class Engine:
         elif isinstance(event, SaveCountryEvent):
             yield from modify_country(self._connection, event)
         # region-related events
-
+        elif isinstance(event, StartRegionSearchEvent):
+            yield from initiate_region_search(self._connection, event)
+        elif isinstance(event, LoadRegionEvent):
+            yield from load_region(self._connection, event)
+        elif isinstance(event, SaveNewRegionEvent):
+            yield from save_region(self._connection, event)
+        elif isinstance(event, SaveRegionEvent):
+            yield from modify_region(self._connection, event)
 
 
     def open_database(self, event):
