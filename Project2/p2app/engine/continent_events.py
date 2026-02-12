@@ -2,7 +2,7 @@ import sqlite3
 from p2app.events.app import *
 from p2app.events.continents import *
 
-def initiate_search(connection, event):
+def initiate_continent_search(connection, event):
     code = event.continent_code()
     name = event.name()
     cursor = connection.execute(

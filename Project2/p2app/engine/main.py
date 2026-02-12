@@ -9,6 +9,7 @@
 # which means that YOU WILL DEFINITELY NEED TO MAKE CHANGES TO THIS FILE.
 from p2app.events import *
 from p2app.engine.continent_events import *
+from p2app.engine.country_events import *
 import sqlite3
 
 
@@ -27,20 +28,36 @@ class Engine:
     def process_event(self, event):
         """A generator function that processes one event sent from the user interface,
         yielding zero or more events in response."""
+        # application-level events
         if isinstance(event, OpenDatabaseEvent):
             yield from self.open_database(event)
         elif isinstance(event, QuitInitiatedEvent):
-            yield EndApplicationEvent
+            yield EndApplicationEvent()
         elif isinstance(event, CloseDatabaseEvent):
-            yield DatabaseClosedEvent
+            if self._connection:
+                self._connection.close()
+                self._connection = None
+            yield DatabaseClosedEvent()
+        # continent-related events
         elif isinstance(event, StartContinentSearchEvent):
-            yield from initiate_search(self._connection, event)
+            yield from initiate_continent_search(self._connection, event)
         elif isinstance(event, LoadContinentEvent):
             yield from load_continent(self._connection, event)
         elif isinstance(event, SaveNewContinentEvent):
             yield from save_continent(self._connection, event)
         elif isinstance(event, SaveContinentEvent):
             yield from modify_continent(self._connection, event)
+        # country-related events
+        elif isinstance(event, StartCountrySearchEvent):
+            yield from initiate_country_search(self._connection, event)
+        elif isinstance(event, LoadCountryEvent):
+            yield from load_country(self._connection, event)
+        elif isinstance(event, SaveNewCountryEvent):
+            yield from save_country(self._connection, event)
+        elif isinstance(event, SaveCountryEvent):
+            yield from modify_country(self._connection, event)
+        # region-related events
+
 
 
     def open_database(self, event):
