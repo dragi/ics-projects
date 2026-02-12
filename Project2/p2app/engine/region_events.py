@@ -59,11 +59,20 @@ def save_region(connection, event):
             (ident, code, local, name, cont, country, wiki, key))
         connection.commit()
         yield RegionSavedEvent(event.region())
-    except sqlite3.IntegrityError:
-        yield SaveRegionFailedEvent('This region already exists in the database')
+    except sqlite3.IntegrityError as e:
+        error_msg = str(e).upper()
+        if 'FOREIGN KEY' in error_msg:
+            yield SaveRegionFailedEvent('Invalid continent or country - please select valid values')
+        elif 'UNIQUE' in error_msg or 'region_code' in error_msg:
+            yield SaveRegionFailedEvent('A region with this code already exists')
+        elif 'PRIMARY KEY' in error_msg:
+            yield SaveRegionFailedEvent('A region with this ID already exists')
+        elif 'NOT NULL' in error_msg:
+            yield SaveRegionFailedEvent('Region code, local code, name, continent, and country are required')
+        else:
+            yield SaveRegionFailedEvent('Database error: unable to save region')
     except Exception:
         yield SaveRegionFailedEvent('Unable to save region')
-
 
 def modify_region(connection, event):
     region = event.region()
@@ -86,7 +95,15 @@ def modify_region(connection, event):
             yield RegionSavedEvent(region)
         else:
             yield SaveRegionFailedEvent('Region not found')
-    except sqlite3.IntegrityError:
-        yield SaveRegionFailedEvent('This region code already exists')
+    except sqlite3.IntegrityError as e:
+        error_msg = str(e).upper()
+        if 'FOREIGN KEY' in error_msg:
+            yield SaveRegionFailedEvent('Invalid continent or country - please select valid values')
+        elif 'UNIQUE' in error_msg or 'region_code' in error_msg:
+            yield SaveRegionFailedEvent('Another region already uses this code')
+        elif 'NOT NULL' in error_msg:
+            yield SaveRegionFailedEvent('Region code, local code, name, continent, and country are required')
+        else:
+            yield SaveRegionFailedEvent('Database error: unable to update region')
     except Exception:
         yield SaveRegionFailedEvent('Unable to update region')

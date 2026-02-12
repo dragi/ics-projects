@@ -51,11 +51,18 @@ def save_continent(connection, event):
             (ident, code, name))
         connection.commit()
         yield ContinentSavedEvent(event.continent())
-    except sqlite3.IntegrityError:
-        yield SaveContinentFailedEvent('This continent already exists in the database')
+    except sqlite3.IntegrityError as e:
+        error_msg = str(e).upper()
+        if 'UNIQUE' in error_msg or 'continent_code' in error_msg:
+            yield SaveContinentFailedEvent('A continent with this code already exists')
+        elif 'PRIMARY KEY' in error_msg:
+            yield SaveContinentFailedEvent('A continent with this ID already exists')
+        elif 'NOT NULL' in error_msg:
+            yield SaveContinentFailedEvent('Continent code and name are required')
+        else:
+            yield SaveContinentFailedEvent('Database error: unable to save continent')
     except Exception:
         yield SaveContinentFailedEvent('Unable to save continent')
-
 
 def modify_continent(connection, event):
     continent = event.continent()
@@ -73,7 +80,13 @@ def modify_continent(connection, event):
             yield ContinentSavedEvent(continent)
         else:
             yield SaveContinentFailedEvent('Continent not found')
-    except sqlite3.IntegrityError:
-        yield SaveContinentFailedEvent('This continent code already exists')
+    except sqlite3.IntegrityError as e:
+        error_msg = str(e).upper()
+        if 'UNIQUE' in error_msg or 'continent_code' in error_msg:
+            yield SaveContinentFailedEvent('Another continent already uses this code')
+        elif 'NOT NULL' in error_msg:
+            yield SaveContinentFailedEvent('Continent code and name are required')
+        else:
+            yield SaveContinentFailedEvent('Database error: unable to update continent')
     except Exception:
         yield SaveContinentFailedEvent('Unable to update continent')

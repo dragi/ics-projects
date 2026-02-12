@@ -54,11 +54,20 @@ def save_country(connection, event):
             (ident, code, name, cont, wiki, keywords))
         connection.commit()
         yield CountrySavedEvent(event.country())
-    except sqlite3.IntegrityError:
-        yield SaveCountryFailedEvent('This country already exists in the database')
+    except sqlite3.IntegrityError as e:
+        error_msg = str(e).upper()
+        if 'FOREIGN KEY' in error_msg:
+            yield SaveCountryFailedEvent('Invalid continent - please select a valid continent')
+        elif 'UNIQUE' in error_msg or 'country_code' in error_msg:
+            yield SaveCountryFailedEvent('A country with this code already exists')
+        elif 'PRIMARY KEY' in error_msg:
+            yield SaveCountryFailedEvent('A country with this ID already exists')
+        elif 'NOT NULL' in error_msg:
+            yield SaveCountryFailedEvent('Country code, name, continent, and wikipedia link are required')
+        else:
+            yield SaveCountryFailedEvent('Database error: unable to save country')
     except Exception:
         yield SaveCountryFailedEvent('Unable to save country')
-
 
 def modify_country(connection, event):
     country = event.country()
@@ -79,7 +88,15 @@ def modify_country(connection, event):
             yield CountrySavedEvent(event.country())
         else:
             yield SaveCountryFailedEvent('Country not found')
-    except sqlite3.IntegrityError:
-        yield SaveCountryFailedEvent('This country code already exists')
+    except sqlite3.IntegrityError as e:
+        error_msg = str(e).upper()
+        if 'FOREIGN KEY' in error_msg:
+            yield SaveCountryFailedEvent('Invalid continent - please select a valid continent')
+        elif 'UNIQUE' in error_msg or 'country_code' in error_msg:
+            yield SaveCountryFailedEvent('Another country already uses this code')
+        elif 'NOT NULL' in error_msg:
+            yield SaveCountryFailedEvent('Country code, name, continent, and wikipedia link are required')
+        else:
+            yield SaveCountryFailedEvent('Database error: unable to update country')
     except Exception:
         yield SaveCountryFailedEvent('Unable to update country')
