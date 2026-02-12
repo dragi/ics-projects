@@ -28,6 +28,10 @@ class Engine:
         yielding zero or more events in response."""
         if isinstance(event, p2app.events.OpenDatabaseEvent):
             yield from self.open_database(event)
+        elif isinstance(event, p2app.events.QuitInitiatedEvent):
+            yield p2app.events.EndApplicationEvent
+        elif isinstance(event, p2app.events.CloseDatabaseEvent):
+            yield p2app.events.DatabaseClosedEvent
 
     def open_database(self, event):
         database_path = event.path()
@@ -42,6 +46,8 @@ class Engine:
             yield p2app.events.DatabaseOpenFailedEvent('The database is invalid or corrupt')
         except Exception as e:
             yield p2app.events.DatabaseOpenFailedEvent('An unexpected error occurred')
+
+
 
 
 
