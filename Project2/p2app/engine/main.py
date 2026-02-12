@@ -29,6 +29,7 @@ class Engine:
     def process_event(self, event):
         """A generator function that processes one event sent from the user interface,
         yielding zero or more events in response."""
+
         # application-level events
         if isinstance(event, OpenDatabaseEvent):
             yield from self.open_database(event)
@@ -39,6 +40,7 @@ class Engine:
                 self._connection.close()
                 self._connection = None
             yield DatabaseClosedEvent()
+
         # continent-related events
         elif isinstance(event, StartContinentSearchEvent):
             yield from initiate_continent_search(self._connection, event)
@@ -48,6 +50,7 @@ class Engine:
             yield from save_continent(self._connection, event)
         elif isinstance(event, SaveContinentEvent):
             yield from modify_continent(self._connection, event)
+
         # country-related events
         elif isinstance(event, StartCountrySearchEvent):
             yield from initiate_country_search(self._connection, event)
@@ -57,6 +60,7 @@ class Engine:
             yield from save_country(self._connection, event)
         elif isinstance(event, SaveCountryEvent):
             yield from modify_country(self._connection, event)
+
         # region-related events
         elif isinstance(event, StartRegionSearchEvent):
             yield from initiate_region_search(self._connection, event)
@@ -68,7 +72,8 @@ class Engine:
             yield from modify_region(self._connection, event)
 
 
-    def open_database(self, event):
+    def open_database(self, event: OpenDatabaseEvent):
+        """Open a database connection and verify it's valid."""
         database_path = event.path()
         try:
             self._connection = sqlite3.connect(database_path)

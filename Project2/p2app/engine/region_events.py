@@ -2,7 +2,8 @@ import sqlite3
 from p2app.events.app import *
 from p2app.events.regions import *
 
-def initiate_region_search(connection, event):
+def initiate_region_search(connection: sqlite3.Connection, event: StartRegionSearchEvent):
+    """Search for regions matching the given criteria."""
     code = event.region_code()
     name = event.name()
     local = event.local_code()
@@ -30,7 +31,8 @@ def initiate_region_search(connection, event):
     for row in rows:
         yield RegionSearchResultEvent(Region(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]))
 
-def load_region(connection, event):
+def load_region(connection: sqlite3.Connection, event: LoadRegionEvent):
+    """Load a region by ID."""
     ident = event.region_id()
     cursor = connection.execute(
         'SELECT region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region WHERE region_id = :id;',
@@ -42,7 +44,8 @@ def load_region(connection, event):
     else:
         yield ErrorEvent('Region not found')
 
-def save_region(connection, event):
+def save_region(connection: sqlite3.Connection, event: SaveNewRegionEvent):
+    """Insert a new region into the database."""
     region = event.region()
     ident = region.region_id
     code = region.region_code if region.region_code else None
@@ -74,7 +77,8 @@ def save_region(connection, event):
     except Exception:
         yield SaveRegionFailedEvent('Unable to save region')
 
-def modify_region(connection, event):
+def modify_region(connection: sqlite3.Connection, event: SaveRegionEvent):
+    """Update an existing region in the database."""
     region = event.region()
     ident = region.region_id
     code = region.region_code if region.region_code else None

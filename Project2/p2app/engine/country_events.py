@@ -2,7 +2,8 @@ import sqlite3
 from p2app.events.app import *
 from p2app.events.countries import *
 
-def initiate_country_search(connection, event):
+def initiate_country_search(connection: sqlite3.Connection, event: StartCountrySearchEvent):
+    """Search for countries matching the given criteria."""
     code = event.country_code()
     name = event.name()
 
@@ -27,7 +28,8 @@ def initiate_country_search(connection, event):
     for row in rows:
         yield CountrySearchResultEvent(Country(row[0], row[1], row[2], row[3], row[4], row[5]))
 
-def load_country(connection, event):
+def load_country(connection: sqlite3.Connection, event: LoadCountryEvent):
+    """Load a country by ID."""
     ident = event.country_id()
     cursor = connection.execute(
         'SELECT country_code, name, continent_id, wikipedia_link, keywords FROM country WHERE country_id = :id;',
@@ -39,7 +41,8 @@ def load_country(connection, event):
     else:
         yield ErrorEvent('Country not found')
 
-def save_country(connection, event):
+def save_country(connection: sqlite3.Connection, event: SaveNewCountryEvent):
+    """Insert a new country into the database."""
     country = event.country()
     ident = country.country_id
     code = country.country_code if country.country_code else None
@@ -69,7 +72,8 @@ def save_country(connection, event):
     except Exception:
         yield SaveCountryFailedEvent('Unable to save country')
 
-def modify_country(connection, event):
+def modify_country(connection: sqlite3.Connection, event: SaveCountryEvent):
+    """Update an existing country in the database."""
     country = event.country()
     ident = country.country_id
     code = country.country_code if country.country_code else None

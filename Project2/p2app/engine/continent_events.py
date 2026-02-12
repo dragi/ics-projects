@@ -2,7 +2,8 @@ import sqlite3
 from p2app.events.app import *
 from p2app.events.continents import *
 
-def initiate_continent_search(connection, event):
+def initiate_continent_search(connection: sqlite3.Connection, event: StartContinentSearchEvent):
+    """Search for continents matching the given criteria."""
     code = event.continent_code()
     name = event.name()
     conditions = []
@@ -26,7 +27,8 @@ def initiate_continent_search(connection, event):
     for row in rows:
         yield ContinentSearchResultEvent(Continent(row[0], row[1], row[2]))
 
-def load_continent(connection, event):
+def load_continent(connection: sqlite3.Connection, event: LoadContinentEvent):
+    """Load a continent by ID."""
     ident = event.continent_id()
     cursor = connection.execute(
         'SELECT continent_code, name FROM continent WHERE continent_id = :id;',
@@ -39,7 +41,8 @@ def load_continent(connection, event):
     else:
         yield ErrorEvent('Continent not found')
 
-def save_continent(connection, event):
+def save_continent(connection: sqlite3.Connection, event: SaveNewContinentEvent):
+    """Insert a new continent into the database."""
     continent = event.continent()
     ident = continent.continent_id
     code = continent.continent_code if continent.continent_code else None
@@ -64,7 +67,8 @@ def save_continent(connection, event):
     except Exception:
         yield SaveContinentFailedEvent('Unable to save continent')
 
-def modify_continent(connection, event):
+def modify_continent(connection: sqlite3.Connection, event: SaveContinentEvent):
+    """Update an existing continent in the database."""
     continent = event.continent()
     ident = continent.continent_id
     code = continent.continent_code if continent.continent_code else None
