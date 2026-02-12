@@ -6,11 +6,11 @@ def initiate_continent_search(connection, event):
     code = event.continent_code()
     name = event.name()
     cursor = connection.execute(
-        'SELECT continent_id FROM continent WHERE continent_code = :code;',
+        'SELECT continent_id, continent_code, name FROM continent WHERE continent_code = :code;',
         {'code': code})
-    ids = cursor.fetchall()
-    for ident in ids:
-        yield ContinentSearchResultEvent(Continent(ident[0], code, name))
+    rows = cursor.fetchall()
+    for row in rows:
+        yield ContinentSearchResultEvent(Continent(row[0], row[1], row[2]))
 
 def load_continent(connection, event):
     ident = event.continent_id()
