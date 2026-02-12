@@ -5,9 +5,25 @@ from p2app.events.countries import *
 def initiate_country_search(connection, event):
     code = event.country_code()
     name = event.name()
+
+    conditions = []
+    params = []
+
+    if code:
+        conditions.append('country_code = ?')
+        params.append(code)
+    if name:
+        conditions.append('name = ?')
+        params.append(name)
+    if conditions:
+        where = 'WHERE ' + ' AND '.join(conditions)
+    else:
+        where = ''
+
     cursor = connection.execute(
-        'SELECT country_id, country_code, name, continent_id, wikipedia_link, keywords FROM country WHERE country_code = :code;',
-        {'code': code})
+        f'SELECT country_id, country_code, name, continent_id, wikipedia_link, keywords FROM country WHERE {where};',
+        params)
+
     rows = cursor.fetchall()
     for row in rows:
         yield CountrySearchResultEvent(Country(row[0], row[1], row[2], row[3], row[4], row[5]))

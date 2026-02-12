@@ -5,11 +5,25 @@ from p2app.events.continents import *
 def initiate_continent_search(connection, event):
     code = event.continent_code()
     name = event.name()
-    cursor = connection.execute(
-        'SELECT continent_id, continent_code, name FROM continent WHERE continent_code = :code;',
-        {'code': code})
-    rows = cursor.fetchall()
+    conditions = []
+    params = []
 
+    if code:
+        conditions.append('continent_code = ?')
+        params.append(code)
+    if name:
+        conditions.append('name = ?')
+        params.append(name)
+    if conditions:
+        where = 'WHERE ' + ' AND '.join(conditions)
+    else:
+        where = ''
+
+    cursor = connection.execute(
+        f'SELECT continent_id, continent_code, name FROM continent WHERE {where};',
+        params)
+
+    rows = cursor.fetchall()
     for row in rows:
         yield ContinentSearchResultEvent(Continent(row[0], row[1], row[2]))
 

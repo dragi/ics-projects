@@ -6,9 +6,26 @@ def initiate_region_search(connection, event):
     code = event.region_code()
     name = event.name()
     local = event.local_code()
+    conditions = []
+    params = []
+
+    if code:
+        conditions.append('region_code = ?')
+        params.append(code)
+    if name:
+        conditions.append('name = ?')
+        params.append(name)
+    if local:
+        conditions.append('local = ?')
+        params.append(local)
+    if conditions:
+        where = 'WHERE ' + ' AND '.join(conditions)
+    else:
+        where = ''
+
     cursor = connection.execute(
-        'SELECT region_id, region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region WHERE region_code = :code;',
-        {'code': code})
+        f'SELECT region_id, region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region WHERE {where};',
+        params)
     rows = cursor.fetchall()
 
     for row in rows:
