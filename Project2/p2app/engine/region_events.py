@@ -10,6 +10,7 @@ def initiate_region_search(connection, event):
         'SELECT region_id, region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region WHERE region_code = :code;',
         {'code': code})
     rows = cursor.fetchall()
+
     for row in rows:
         yield RegionSearchResultEvent(Region(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]))
 
@@ -18,10 +19,10 @@ def load_region(connection, event):
     cursor = connection.execute(
         'SELECT region_code, local_code, name, continent_id, country_id, wikipedia_link, keywords FROM region WHERE region_id = :id;',
         {'id': ident})
-    rows = cursor.fetchall()
-    if rows:
-        for row in rows:
-            yield RegionLoadedEvent(Region(ident, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+    row = cursor.fetchone()
+
+    if row:
+        yield RegionLoadedEvent(Region(ident, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
     else:
         yield ErrorEvent('Region not found')
 

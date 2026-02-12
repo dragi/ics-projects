@@ -9,6 +9,7 @@ def initiate_continent_search(connection, event):
         'SELECT continent_id, continent_code, name FROM continent WHERE continent_code = :code;',
         {'code': code})
     rows = cursor.fetchall()
+
     for row in rows:
         yield ContinentSearchResultEvent(Continent(row[0], row[1], row[2]))
 
@@ -17,11 +18,11 @@ def load_continent(connection, event):
     cursor = connection.execute(
         'SELECT continent_code, name FROM continent WHERE continent_id = :id;',
         {'id': ident})
-    rows = cursor.fetchall()
-    if rows:
-        for row in rows:
-            code, name = row
-            yield ContinentLoadedEvent(Continent(ident, code, name))
+    row = cursor.fetchone()
+
+    if row:
+        code, name = row
+        yield ContinentLoadedEvent(Continent(ident, code, name))
     else:
         yield ErrorEvent('Continent not found')
 

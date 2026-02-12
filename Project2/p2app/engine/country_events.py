@@ -17,10 +17,10 @@ def load_country(connection, event):
     cursor = connection.execute(
         'SELECT country_code, name, continent_id, wikipedia_link, keywords FROM country WHERE country_id = :id;',
         {'id': ident})
-    rows = cursor.fetchall()
-    if rows:
-        for row in rows:
-            yield CountryLoadedEvent(Country(ident, row[0], row[1], row[2], row[3], row[4]))
+    row = cursor.fetchone()
+
+    if row:
+        yield CountryLoadedEvent(Country(ident, row[0], row[1], row[2], row[3], row[4]))
     else:
         yield ErrorEvent('Country not found')
 
