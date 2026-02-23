@@ -1,7 +1,7 @@
 from grin.lexing import to_tokens, GrinLexError, KEYWORDS
 from grin.location import GrinLocation
 from grin.token import GrinTokenKind, GrinToken
-from grin.interpreter import read_lines
+from grin.interpreter_state import read_lines
 import unittest
 
 

@@ -14,7 +14,8 @@ import grin
 
 
 def main() -> None:
-    grin.read_lines()
+    state = grin.InterpreterState()
+    state.read_lines()
 
 
 if __name__ == '__main__':
