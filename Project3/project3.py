@@ -14,7 +14,7 @@ import grin
 
 
 def main() -> None:
-    pass
+    grin.read_lines()
 
 
 if __name__ == '__main__':
