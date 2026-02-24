@@ -11,11 +11,16 @@
 # the 'grin' package, isolated in a way that allows you to unit test them.
 
 import grin
-
+from grin.statement import make_statement
 
 def main() -> None:
     state = grin.InterpreterState()
     state.read_lines()
+    statements = [make_statement(tokens) for tokens in state.lines()]
+    while not state.is_finished():
+        line = state.current_line()
+        statements[line].execute(state)
+        state.go_to_next_line()
 
 
 if __name__ == '__main__':
