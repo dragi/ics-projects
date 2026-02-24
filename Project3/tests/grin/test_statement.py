@@ -9,7 +9,7 @@ from grin.location import GrinLocation
 def make_token(kind, text, value=None):
     return GrinToken(kind=kind, text=text, location=GrinLocation(1, 1), value=value)
 
-LOC = GrinLocation(1, 1)
+LOCATION = GrinLocation(1, 1)
 
 class TestResolve(unittest.TestCase):
     def test_integer_literal(self):
@@ -38,14 +38,14 @@ class TestLetStatement(unittest.TestCase):
         state = InterpreterState()
         var = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
         val = make_token(GrinTokenKind.LITERAL_INTEGER, '5', 5)
-        LetStatement([var, val], LOC).execute(state)
+        LetStatement([var, val], LOCATION).execute(state)
         self.assertEqual(state.get_variable('A'), 5)
 
     def test_sets_string(self):
         state = InterpreterState()
         var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
         val = make_token(GrinTokenKind.LITERAL_STRING, '"Boo"', 'Boo')
-        LetStatement([var, val], LOC).execute(state)
+        LetStatement([var, val], LOCATION).execute(state)
         self.assertEqual(state.get_variable('S'), 'Boo')
 
     def test_copies_from_other_variable(self):
@@ -53,7 +53,7 @@ class TestLetStatement(unittest.TestCase):
         state.set_variable('B', 42)
         var = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
         src = make_token(GrinTokenKind.IDENTIFIER, 'B', 'B')
-        LetStatement([var, src], LOC).execute(state)
+        LetStatement([var, src], LOCATION).execute(state)
         self.assertEqual(state.get_variable('A'), 42)
 
     def test_overwrites_existing_value(self):
@@ -61,7 +61,7 @@ class TestLetStatement(unittest.TestCase):
         state.set_variable('A', 1)
         var = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
         val = make_token(GrinTokenKind.LITERAL_INTEGER, '99', 99)
-        LetStatement([var, val], LOC).execute(state)
+        LetStatement([var, val], LOCATION).execute(state)
         self.assertEqual(state.get_variable('A'), 99)
 
 class TestPrintStatement(unittest.TestCase):
@@ -69,21 +69,21 @@ class TestPrintStatement(unittest.TestCase):
         state = InterpreterState()
         val = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
         out = io.StringIO()
-        PrintStatement([val], LOC).execute(state, output_stream=out)
+        PrintStatement([val], LOCATION).execute(state, output_stream=out)
         self.assertEqual(out.getvalue(), '3\n')
 
     def test_prints_string(self):
         state = InterpreterState()
         val = make_token(GrinTokenKind.LITERAL_STRING, '"hello"', 'hello')
         out = io.StringIO()
-        PrintStatement([val], LOC).execute(state, output_stream=out)
+        PrintStatement([val], LOCATION).execute(state, output_stream=out)
         self.assertEqual(out.getvalue(), 'hello\n')
 
     def test_prints_unset_variable_as_zero(self):
         state = InterpreterState()
         val = make_token(GrinTokenKind.IDENTIFIER, 'Z', 'Z')
         out = io.StringIO()
-        PrintStatement([val], LOC).execute(state, output_stream=out)
+        PrintStatement([val], LOCATION).execute(state, output_stream=out)
         self.assertEqual(out.getvalue(), '0\n')
 
     def test_prints_variable_value(self):
@@ -91,46 +91,46 @@ class TestPrintStatement(unittest.TestCase):
         state.set_variable('X', 7)
         val = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
         out = io.StringIO()
-        PrintStatement([val], LOC).execute(state, output_stream=out)
+        PrintStatement([val], LOCATION).execute(state, output_stream=out)
         self.assertEqual(out.getvalue(), '7\n')
 
 class TestInnumStatement(unittest.TestCase):
     def test_reads_integer(self):
         state = InterpreterState()
         var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        InnumStatement([var], LOC).execute(state, input_stream=io.StringIO('42\n'))
+        InnumStatement([var], LOCATION).execute(state, input_stream=io.StringIO('42\n'))
         self.assertEqual(state.get_variable('X'), 42)
 
     def test_reads_float(self):
         state = InterpreterState()
         var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        InnumStatement([var], LOC).execute(state, input_stream=io.StringIO('3.14\n'))
+        InnumStatement([var], LOCATION).execute(state, input_stream=io.StringIO('3.14\n'))
         self.assertAlmostEqual(state.get_variable('X'), 3.14)
 
     def test_bad_input_raises(self):
         state = InterpreterState()
         var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
         with self.assertRaises(Exception):
-            InnumStatement([var], LOC).execute(state, input_stream=io.StringIO('abc\n'))
+            InnumStatement([var], LOCATION).execute(state, input_stream=io.StringIO('abc\n'))
 
 class TestInstrStatement(unittest.TestCase):
     def test_reads_string(self):
         state = InterpreterState()
         var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
-        InstrStatement([var], LOC).execute(state, input_stream=io.StringIO('hello\n'))
+        InstrStatement([var], LOCATION).execute(state, input_stream=io.StringIO('hello\n'))
         self.assertEqual(state.get_variable('S'), 'hello')
 
     def test_reads_empty_line(self):
         state = InterpreterState()
         var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
-        InstrStatement([var], LOC).execute(state, input_stream=io.StringIO('\n'))
+        InstrStatement([var], LOCATION).execute(state, input_stream=io.StringIO('\n'))
         self.assertEqual(state.get_variable('S'), '')
 
 class TestEndStatement(unittest.TestCase):
     def test_marks_program_finished(self):
         state = InterpreterState()
         state._lines = [None, None, None]
-        EndStatement([], LOC).execute(state)
+        EndStatement([], LOCATION).execute(state)
         self.assertTrue(state.is_finished())
 
 class TestMakeStatement(unittest.TestCase):

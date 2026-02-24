@@ -1,18 +1,14 @@
 import sys
 from grin.token import GrinToken, GrinTokenKind
 from grin.location import GrinLocation
-from grin.value import IntValue, FloatValue, StringValue
-from grin.value import resolve as value_resolve
+from grin.value import IntValue, FloatValue, StringValue, resolve
 
-def resolve(token: GrinToken, state) -> int|float|str:
-    if token.kind() == GrinTokenKind.LITERAL_INTEGER:
-        return token.value()
-    elif token.kind() == GrinTokenKind.LITERAL_FLOAT:
-        return token.value()
-    elif token.kind() == GrinTokenKind.LITERAL_STRING:
-        return token.value()
-    else:
-        return state.get_variable(token.text())
+__all__ = [
+    'Statement', 'LetStatement', 'PrintStatement', 'InnumStatement', 'InstrStatement',
+    'EndStatement', 'resolve', 'make_statement', 'ArithmeticStatement',
+    'AddStatement', 'SubStatement', 'MultStatement', 'DivStatement',
+    'GotoStatement', 'GosubStatement', 'ReturnStatement'
+]
 
 class Statement:
     def __init__(self, tokens: list[GrinToken], location: GrinLocation):
@@ -56,7 +52,7 @@ class InnumStatement(Statement):
             else:
                 state.set_variable(self._variable_name, int(raw))
         except ValueError:
-            raise RuntimeError
+            raise RuntimeError('INNUM expected a number')
 
 class InstrStatement(Statement):
     def __init__(self, tokens, location):
@@ -66,11 +62,6 @@ class InstrStatement(Statement):
     def execute(self, state, input_stream=sys.stdin) -> None:
         state.set_variable(self._variable_name, input_stream.readline().rstrip('\n'))
 
-class ReturnStatement(Statement):
-    def execute(self, state) -> None:
-        if not state.has_return():
-            raise RuntimeError
-        state.jump_to(state.pop_return())
 
 class EndStatement(Statement):
     def execute(self, state) -> None:
@@ -93,7 +84,7 @@ class ArithmeticStatement(Statement):
             current = FloatValue(current_raw)
         else:
             current = StringValue(current_raw)
-        operand = value_resolve(self._value_token, state)
+        operand = resolve(self._value_token, state)
         result = self._apply(current, operand)
         state.set_variable(self._variable_name, result.value())
 
@@ -112,6 +103,104 @@ class MultStatement(ArithmeticStatement):
 class DivStatement(ArithmeticStatement):
     def _apply(self, left, right):
         return left.divide(right, self._location)
+
+class GotoStatement(Statement):
+    def __init__(self, tokens, location):
+        super().__init__(tokens, location)
+        self._target_token = tokens[0]
+
+        if len(tokens) > 1 and tokens[1].kind() == GrinTokenKind.IF:
+            self._cond_val1 = tokens[2]
+            self._cond_op = tokens[3]
+            self._cond_val2 = tokens[4]
+        else:
+            self._cond_val1 = None
+            self._cond_op = None
+            self._cond_val2 = None
+
+    def _condition_is_true(self, state) -> bool:
+        if self._cond_op is None:
+            return True
+        left = resolve(self._cond_val1, state)
+        right = resolve(self._cond_val2, state)
+        return _compare(left, right, self._cond_op)
+
+    def _resolve_target(self, state) -> int:
+        token = self._target_token
+
+        if token.kind() == GrinTokenKind.LITERAL_INTEGER:
+            return _offset_to_line(token.value(), state, self._location)
+
+        elif token.kind() == GrinTokenKind.LITERAL_STRING:
+            return _label_to_line(token.value(), state, self._location)
+
+        elif token.kind() == GrinTokenKind.IDENTIFIER:
+            raw = state.get_variable(token.text())
+            if isinstance(raw, int):
+                return _offset_to_line(raw, state, self._location)
+            elif isinstance(raw, str):
+                return _label_to_line(raw, state, self._location)
+            else:
+                raise RuntimeError('Jump target variable must hold an integer or string')
+
+        raise RuntimeError('Invalid jump target')
+
+    def execute(self, state) -> None:
+        if not self._condition_is_true(state):
+            return
+        target = self._resolve_target(state)
+        state.jump_to_line(target)
+
+class GosubStatement(GotoStatement):
+    def execute(self, state) -> None:
+        if not self._condition_is_true(state):
+            return
+        target = self._resolve_target(state)
+        state.push_return(state.current_line() + 1)
+        state.jump_to_line(target)
+
+class ReturnStatement(Statement):
+    def execute(self, state) -> None:
+        if not state.has_return():
+            raise RuntimeError('RETURN with no matching GOSUB')
+        state.jump_to_line(state.pop_return())
+
+def _offset_to_line(offset: int, state, location) -> int:
+    if offset == 0:
+        raise RuntimeError('GOTO 0 is not permitted')
+    target = state.current_line() + offset
+    if target < 0 or target > state.length():
+        raise RuntimeError(f'Jump target is out of range')
+    return target
+
+def _label_to_line(label: str, state, location) -> int:
+    line = state.label_line(label)
+    if line is None:
+        raise RuntimeError(f'Unknown label "{label}"')
+    return line
+
+def _compare(left, right, op_token) -> bool:
+    l = left.value()
+    r = right.value()
+
+    l_num = isinstance(l, (int, float))
+    r_num = isinstance(r, (int, float))
+    if not ((l_num and r_num) or (isinstance(l, str) and isinstance(r, str))):
+        raise RuntimeError(f'Type mismatch in comparison')
+
+    op = op_token.kind()
+    if op == GrinTokenKind.EQUAL:
+        return l == r
+    elif op == GrinTokenKind.NOT_EQUAL:
+        return l != r
+    elif op == GrinTokenKind.LESS_THAN:
+        return l < r
+    elif op == GrinTokenKind.LESS_THAN_OR_EQUAL:
+        return l <= r
+    elif op == GrinTokenKind.GREATER_THAN:
+        return l > r
+    elif op == GrinTokenKind.GREATER_THAN_OR_EQUAL:
+        return l >= r
 
 def make_statement(tokens: list) -> Statement:
     index = 0
@@ -142,9 +231,9 @@ def make_statement(tokens: list) -> Statement:
         return MultStatement(rest, keyword_token.location())
     elif keyword_token.kind() == GrinTokenKind.DIV:
         return DivStatement(rest, keyword_token.location())
-
-__all__ = [
-    'Statement', 'LetStatement', 'PrintStatement', 'InnumStatement', 'InstrStatement',
-    'ReturnStatement', 'EndStatement', 'resolve', 'make_statement',
-    'ArithmeticStatement', 'AddStatement', 'SubStatement', 'MultStatement', 'DivStatement'
-]
+    elif keyword_token.kind() == GrinTokenKind.GOTO:
+        return GotoStatement(rest, keyword_token.location())
+    elif keyword_token.kind() == GrinTokenKind.GOSUB:
+        return GosubStatement(rest, keyword_token.location())
+    elif keyword_token.kind() == GrinTokenKind.RETURN:
+        return ReturnStatement(rest, keyword_token.location())
