@@ -114,5 +114,60 @@ class TestCallStack(unittest.TestCase):
         state.pop_return()
         self.assertFalse(state.has_return())
 
+
+    class TestLabelMapping(unittest.TestCase):
+        def setUp(self):
+            from grin.token import GrinTokenKind
+            self.token1 = GrinToken(kind = GrinTokenKind.IDENTIFIER, text = 'START',
+                                    location = GrinLocation(1, 1), value = 'START')
+            self.colon = GrinToken(kind = GrinTokenKind.COLON, text = ':',
+                                   location = GrinLocation(1, 5), value = None)
+            self.token2 = GrinToken(kind = GrinTokenKind.PRINT, text = 'PRINT',
+                                    location = GrinLocation(1, 6), value = None)
+
+        def test_map_labels_finds_label(self):
+            state = InterpreterState()
+            state._lines = [[self.token1, self.colon, self.token2]]
+            labels = state._map_labels()
+            self.assertIn('START', labels)
+            self.assertEqual(labels['START'], 0)
+
+        def test_map_labels_ignores_lines_without_labels(self):
+            state = InterpreterState()
+            state._lines = [[self.token2]]
+            labels = state._map_labels()
+            self.assertEqual(labels, {})
+
+        def test_label_line_returns_correct_line(self):
+            state = InterpreterState()
+            state._labels = {'main': 2}
+            self.assertEqual(state.label_line('main'), 2)
+
+        def test_label_line_nonexistent_returns_none(self):
+            state = InterpreterState()
+            state._labels = {}
+            self.assertIsNone(state.label_line('missing'))
+
+
+    class TestJumpBoundaries(unittest.TestCase):
+        def test_jump_to_first_line(self):
+            state = InterpreterState()
+            state._lines = [None] * 5
+            state.jump_to_line(1)
+            self.assertEqual(state.current_line(), 0)
+
+        def test_jump_to_last_line(self):
+            state = InterpreterState()
+            state._lines = [None] * 5
+            state.jump_to_line(5)
+            self.assertEqual(state.current_line(), 4)
+
+        def test_end_prevents_further_execution(self):
+            state = InterpreterState()
+            state._lines = [None] * 5
+            state.end()
+            state.go_to_next_line()
+            self.assertTrue(state.is_finished())
+
 if __name__ == '__main__':
     unittest.main()

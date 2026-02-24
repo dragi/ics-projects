@@ -166,5 +166,117 @@ class TestMakeStatement(unittest.TestCase):
         val = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
         self.assertIsInstance(make_statement([label, colon, kw, val]), PrintStatement)
 
+
+    class TestArithmeticStatements(unittest.TestCase):
+        def test_add_statement(self):
+            from grin.statement import AddStatement
+            state = InterpreterState()
+            state.set_variable('X', 5)
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            val = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
+            AddStatement([var, val], LOCATION).execute(state)
+            self.assertEqual(state.get_variable('X'), 8)
+
+        def test_sub_statement(self):
+            from grin.statement import SubStatement
+            state = InterpreterState()
+            state.set_variable('X', 10)
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            val = make_token(GrinTokenKind.LITERAL_INTEGER, '4', 4)
+            SubStatement([var, val], LOCATION).execute(state)
+            self.assertEqual(state.get_variable('X'), 6)
+
+        def test_mult_statement_integer(self):
+            from grin.statement import MultStatement
+            state = InterpreterState()
+            state.set_variable('X', 3)
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            val = make_token(GrinTokenKind.LITERAL_INTEGER, '4', 4)
+            MultStatement([var, val], LOCATION).execute(state)
+            self.assertEqual(state.get_variable('X'), 12)
+
+        def test_mult_statement_string(self):
+            from grin.statement import MultStatement
+            state = InterpreterState()
+            state.set_variable('S', 'ab')
+            var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
+            val = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
+            MultStatement([var, val], LOCATION).execute(state)
+            self.assertEqual(state.get_variable('S'), 'ababab')
+
+        def test_div_statement(self):
+            from grin.statement import DivStatement
+            state = InterpreterState()
+            state.set_variable('X', 7)
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            val = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+            DivStatement([var, val], LOCATION).execute(state)
+            self.assertEqual(state.get_variable('X'), 3)
+
+        def test_div_by_zero_raises(self):
+            from grin.statement import DivStatement
+            state = InterpreterState()
+            state.set_variable('X', 5)
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            val = make_token(GrinTokenKind.LITERAL_INTEGER, '0', 0)
+            with self.assertRaises(RuntimeError):
+                DivStatement([var, val], LOCATION).execute(state)
+
+
+    class TestPrintStatementEdgeCases(unittest.TestCase):
+        def test_print_float(self):
+            state = InterpreterState()
+            val = make_token(GrinTokenKind.LITERAL_FLOAT, '3.14', 3.14)
+            out = io.StringIO()
+            PrintStatement([val], LOCATION).execute(state, output_stream = out)
+            self.assertEqual(out.getvalue().strip(), '3.14')
+
+        def test_print_float_from_variable(self):
+            state = InterpreterState()
+            state.set_variable('F', 2.5)
+            val = make_token(GrinTokenKind.IDENTIFIER, 'F', 'F')
+            out = io.StringIO()
+            PrintStatement([val], LOCATION).execute(state, output_stream = out)
+            self.assertEqual(out.getvalue().strip(), '2.5')
+
+
+    class TestInnumEdgeCases(unittest.TestCase):
+        def test_float_without_fractional_part(self):
+            state = InterpreterState()
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            InnumStatement([var], LOCATION).execute(state, input_stream = io.StringIO('42.0\n'))
+            self.assertIsInstance(state.get_variable('X'), int)
+            self.assertEqual(state.get_variable('X'), 42)
+
+        def test_negative_number(self):
+            state = InterpreterState()
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            InnumStatement([var], LOCATION).execute(state, input_stream = io.StringIO('-17\n'))
+            self.assertEqual(state.get_variable('X'), -17)
+
+        def test_whitespace_input(self):
+            state = InterpreterState()
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            InnumStatement([var], LOCATION).execute(state, input_stream = io.StringIO('  42  \n'))
+            self.assertEqual(state.get_variable('X'), 42)
+
+
+    class TestMakeStatementEdgeCases(unittest.TestCase):
+        def test_label_with_arithmetic(self):
+            label = make_token(GrinTokenKind.IDENTIFIER, 'LOOP', 'LOOP')
+            colon = make_token(GrinTokenKind.COLON, ':')
+            kw = make_token(GrinTokenKind.ADD, 'ADD')
+            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
+            val = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
+            stmt = make_statement([label, colon, kw, var, val])
+            from grin.statement import AddStatement
+            self.assertIsInstance(stmt, AddStatement)
+            self.assertEqual(stmt.label(), 'LOOP')
+
+        def test_unknown_statement_raises(self):
+            kw = make_token(GrinTokenKind.IDENTIFIER, 'BOGUS', 'BOGUS')
+            with self.assertRaises(RuntimeError):
+                make_statement([kw])
+
 if __name__ == '__main__':
     unittest.main()

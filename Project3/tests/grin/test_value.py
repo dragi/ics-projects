@@ -72,5 +72,59 @@ class TestResolve(unittest.TestCase):
                           location=GrinLocation(1, 1), value='Z')
         self.assertEqual(resolve(token, InterpreterState()).value(), 0)
 
+
+    class TestMixedTypeOperations(unittest.TestCase):
+        def test_int_add_float(self):
+            result = IntValue(3).add(FloatValue(2.5))
+            self.assertIsInstance(result, FloatValue)
+            self.assertAlmostEqual(result.value(), 5.5)
+
+        def test_float_add_int(self):
+            result = FloatValue(3.5).add(IntValue(2))
+            self.assertIsInstance(result, FloatValue)
+            self.assertAlmostEqual(result.value(), 5.5)
+
+        def test_int_multiply_float(self):
+            result = IntValue(3).multiply(FloatValue(2.5))
+            self.assertIsInstance(result, FloatValue)
+            self.assertAlmostEqual(result.value(), 7.5)
+
+        def test_float_multiply_int(self):
+            result = FloatValue(3.5).multiply(IntValue(2))
+            self.assertIsInstance(result, FloatValue)
+            self.assertAlmostEqual(result.value(), 7.0)
+
+        def test_int_divide_float(self):
+            result = IntValue(7).divide(FloatValue(2.0))
+            self.assertIsInstance(result, FloatValue)
+            self.assertAlmostEqual(result.value(), 3.5)
+
+        def test_float_divide_int(self):
+            result = FloatValue(7.5).divide(IntValue(2))
+            self.assertIsInstance(result, FloatValue)
+            self.assertAlmostEqual(result.value(), 3.75)
+
+
+    class TestValueEdgeCases(unittest.TestCase):
+        def test_int_divide_by_float_zero(self):
+            with self.assertRaises(RuntimeError):
+                IntValue(5).divide(FloatValue(0.0))
+
+        def test_float_divide_by_int_zero(self):
+            with self.assertRaises(RuntimeError):
+                FloatValue(5.0).divide(IntValue(0))
+
+        def test_int_multiply_string_zero(self):
+            result = IntValue(0).multiply(StringValue('abc'))
+            self.assertEqual(result.value(), '')
+
+        def test_string_multiply_zero(self):
+            result = StringValue('abc').multiply(IntValue(0))
+            self.assertEqual(result.value(), '')
+
+        def test_float_value_representation(self):
+            f = FloatValue(3.14)
+            self.assertAlmostEqual(f.value(), 3.14)
+
 if __name__ == '__main__':
     unittest.main()
