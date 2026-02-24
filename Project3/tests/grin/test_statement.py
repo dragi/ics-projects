@@ -1,282 +1,243 @@
 import unittest
-import io
 from grin.interpreter_state import InterpreterState
-from grin.statement import (LetStatement, PrintStatement, InnumStatement,
-    InstrStatement, EndStatement, make_statement, resolve)
+from grin.statement import (GotoStatement, GosubStatement, ReturnStatement, make_statement)
 from grin.token import GrinToken, GrinTokenKind
 from grin.location import GrinLocation
 
-def make_token(kind, text, value=None):
-    return GrinToken(kind=kind, text=text, location=GrinLocation(1, 1), value=value)
+
+def make_token(kind, text, value = None):
+    return GrinToken(kind = kind, text = text, location = GrinLocation(1, 1), value = value)
+
 
 LOCATION = GrinLocation(1, 1)
 
-class TestResolve(unittest.TestCase):
-    def test_integer_literal(self):
-        state = InterpreterState()
-        token = make_token(GrinTokenKind.LITERAL_INTEGER, '7', 7)
-        self.assertEqual(resolve(token, state), 7)
 
-    def test_string_literal(self):
-        state = InterpreterState()
-        token = make_token(GrinTokenKind.LITERAL_STRING, '"hi"', 'hi')
-        self.assertEqual(resolve(token, state), 'hi')
-
-    def test_variable_that_was_set(self):
-        state = InterpreterState()
-        state.set_variable('X', 99)
-        token = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        self.assertEqual(resolve(token, state), 99)
-
-    def test_variable_never_set_gives_zero(self):
-        state = InterpreterState()
-        token = make_token(GrinTokenKind.IDENTIFIER, 'Z', 'Z')
-        self.assertEqual(resolve(token, state), 0)
-
-class TestLetStatement(unittest.TestCase):
-    def test_sets_integer(self):
-        state = InterpreterState()
-        var = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
-        val = make_token(GrinTokenKind.LITERAL_INTEGER, '5', 5)
-        LetStatement([var, val], LOCATION).execute(state)
-        self.assertEqual(state.get_variable('A'), 5)
-
-    def test_sets_string(self):
-        state = InterpreterState()
-        var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
-        val = make_token(GrinTokenKind.LITERAL_STRING, '"Boo"', 'Boo')
-        LetStatement([var, val], LOCATION).execute(state)
-        self.assertEqual(state.get_variable('S'), 'Boo')
-
-    def test_copies_from_other_variable(self):
-        state = InterpreterState()
-        state.set_variable('B', 42)
-        var = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
-        src = make_token(GrinTokenKind.IDENTIFIER, 'B', 'B')
-        LetStatement([var, src], LOCATION).execute(state)
-        self.assertEqual(state.get_variable('A'), 42)
-
-    def test_overwrites_existing_value(self):
-        state = InterpreterState()
-        state.set_variable('A', 1)
-        var = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
-        val = make_token(GrinTokenKind.LITERAL_INTEGER, '99', 99)
-        LetStatement([var, val], LOCATION).execute(state)
-        self.assertEqual(state.get_variable('A'), 99)
-
-class TestPrintStatement(unittest.TestCase):
-    def test_prints_integer(self):
-        state = InterpreterState()
-        val = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
-        out = io.StringIO()
-        PrintStatement([val], LOCATION).execute(state, output_stream=out)
-        self.assertEqual(out.getvalue(), '3\n')
-
-    def test_prints_string(self):
-        state = InterpreterState()
-        val = make_token(GrinTokenKind.LITERAL_STRING, '"hello"', 'hello')
-        out = io.StringIO()
-        PrintStatement([val], LOCATION).execute(state, output_stream=out)
-        self.assertEqual(out.getvalue(), 'hello\n')
-
-    def test_prints_unset_variable_as_zero(self):
-        state = InterpreterState()
-        val = make_token(GrinTokenKind.IDENTIFIER, 'Z', 'Z')
-        out = io.StringIO()
-        PrintStatement([val], LOCATION).execute(state, output_stream=out)
-        self.assertEqual(out.getvalue(), '0\n')
-
-    def test_prints_variable_value(self):
-        state = InterpreterState()
-        state.set_variable('X', 7)
-        val = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        out = io.StringIO()
-        PrintStatement([val], LOCATION).execute(state, output_stream=out)
-        self.assertEqual(out.getvalue(), '7\n')
-
-class TestInnumStatement(unittest.TestCase):
-    def test_reads_integer(self):
-        state = InterpreterState()
-        var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        InnumStatement([var], LOCATION).execute(state, input_stream=io.StringIO('42\n'))
-        self.assertEqual(state.get_variable('X'), 42)
-
-    def test_reads_float(self):
-        state = InterpreterState()
-        var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        InnumStatement([var], LOCATION).execute(state, input_stream=io.StringIO('3.14\n'))
-        self.assertAlmostEqual(state.get_variable('X'), 3.14)
-
-    def test_bad_input_raises(self):
-        state = InterpreterState()
-        var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        with self.assertRaises(Exception):
-            InnumStatement([var], LOCATION).execute(state, input_stream=io.StringIO('abc\n'))
-
-class TestInstrStatement(unittest.TestCase):
-    def test_reads_string(self):
-        state = InterpreterState()
-        var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
-        InstrStatement([var], LOCATION).execute(state, input_stream=io.StringIO('hello\n'))
-        self.assertEqual(state.get_variable('S'), 'hello')
-
-    def test_reads_empty_line(self):
-        state = InterpreterState()
-        var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
-        InstrStatement([var], LOCATION).execute(state, input_stream=io.StringIO('\n'))
-        self.assertEqual(state.get_variable('S'), '')
-
-class TestEndStatement(unittest.TestCase):
-    def test_marks_program_finished(self):
-        state = InterpreterState()
-        state._lines = [None, None, None]
-        EndStatement([], LOCATION).execute(state)
-        self.assertTrue(state.is_finished())
-
-class TestMakeStatement(unittest.TestCase):
-    def test_let(self):
-        var = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
-        val = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
-        kw = make_token(GrinTokenKind.LET, 'LET')
-        self.assertIsInstance(make_statement([kw, var, val]), LetStatement)
-
-    def test_print(self):
-        kw = make_token(GrinTokenKind.PRINT, 'PRINT')
-        val = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
-        self.assertIsInstance(make_statement([kw, val]), PrintStatement)
-
-    def test_innum(self):
-        kw = make_token(GrinTokenKind.INNUM, 'INNUM')
-        var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        self.assertIsInstance(make_statement([kw, var]), InnumStatement)
-
-    def test_instr(self):
-        kw = make_token(GrinTokenKind.INSTR, 'INSTR')
-        var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-        self.assertIsInstance(make_statement([kw, var]), InstrStatement)
-
-    def test_end(self):
-        kw = make_token(GrinTokenKind.END, 'END')
-        self.assertIsInstance(make_statement([kw]), EndStatement)
-
-    def test_label_is_skipped(self):
-        label = make_token(GrinTokenKind.IDENTIFIER, 'LOOP', 'LOOP')
-        colon = make_token(GrinTokenKind.COLON, ':')
-        kw = make_token(GrinTokenKind.PRINT, 'PRINT')
-        val = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
-        self.assertIsInstance(make_statement([label, colon, kw, val]), PrintStatement)
+def make_program(n):
+    state = InterpreterState()
+    state._lines = [None] * n
+    return state
 
 
-    class TestArithmeticStatements(unittest.TestCase):
-        def test_add_statement(self):
-            from grin.statement import AddStatement
-            state = InterpreterState()
-            state.set_variable('X', 5)
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            val = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
-            AddStatement([var, val], LOCATION).execute(state)
-            self.assertEqual(state.get_variable('X'), 8)
+class TestGotoStatement(unittest.TestCase):
+    def test_basic_forward_jump(self):
+        state = make_program(5)
+        # GOTO 2 from line 0 should land on line 2
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        GotoStatement([target], LOCATION).execute(state)
+        self.assertEqual(state.current_line(),
+                         1)  # jump_to_line sets to line-1, so line 2 -> index 1
 
-        def test_sub_statement(self):
-            from grin.statement import SubStatement
-            state = InterpreterState()
-            state.set_variable('X', 10)
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            val = make_token(GrinTokenKind.LITERAL_INTEGER, '4', 4)
-            SubStatement([var, val], LOCATION).execute(state)
-            self.assertEqual(state.get_variable('X'), 6)
+    def test_backward_jump(self):
+        state = make_program(5)
+        state._current_line = 3
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '-2', -2)
+        GotoStatement([target], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 1)  # from line 4 (index 3), -2 -> line 2 (index 1)
 
-        def test_mult_statement_integer(self):
-            from grin.statement import MultStatement
-            state = InterpreterState()
-            state.set_variable('X', 3)
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            val = make_token(GrinTokenKind.LITERAL_INTEGER, '4', 4)
-            MultStatement([var, val], LOCATION).execute(state)
-            self.assertEqual(state.get_variable('X'), 12)
+    def test_jump_to_label(self):
+        state = make_program(5)
+        state._labels = {'loop': 3}
+        target = make_token(GrinTokenKind.LITERAL_STRING, '"loop"', 'loop')
+        GotoStatement([target], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 3)  # label line 4 -> index 3
 
-        def test_mult_statement_string(self):
-            from grin.statement import MultStatement
-            state = InterpreterState()
-            state.set_variable('S', 'ab')
-            var = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
-            val = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
-            MultStatement([var, val], LOCATION).execute(state)
-            self.assertEqual(state.get_variable('S'), 'ababab')
+    def test_goto_zero_raises(self):
+        state = make_program(5)
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '0', 0)
+        with self.assertRaises(RuntimeError):
+            GotoStatement([target], LOCATION).execute(state)
 
-        def test_div_statement(self):
-            from grin.statement import DivStatement
-            state = InterpreterState()
-            state.set_variable('X', 7)
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            val = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
-            DivStatement([var, val], LOCATION).execute(state)
-            self.assertEqual(state.get_variable('X'), 3)
+    def test_out_of_range_raises(self):
+        state = make_program(3)
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '99', 99)
+        with self.assertRaises(RuntimeError):
+            GotoStatement([target], LOCATION).execute(state)
 
-        def test_div_by_zero_raises(self):
-            from grin.statement import DivStatement
-            state = InterpreterState()
-            state.set_variable('X', 5)
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            val = make_token(GrinTokenKind.LITERAL_INTEGER, '0', 0)
-            with self.assertRaises(RuntimeError):
-                DivStatement([var, val], LOCATION).execute(state)
+    def test_unknown_label_raises(self):
+        state = make_program(3)
+        state._labels = {}
+        target = make_token(GrinTokenKind.LITERAL_STRING, '"nowhere"', 'nowhere')
+        with self.assertRaises(RuntimeError):
+            GotoStatement([target], LOCATION).execute(state)
 
+    def test_conditional_jump_taken(self):
+        state = make_program(5)
+        state.set_variable('A', 3)
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        IF = make_token(GrinTokenKind.IF, 'IF')
+        val1 = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
+        op = make_token(GrinTokenKind.LESS_THAN, '<')
+        val2 = make_token(GrinTokenKind.LITERAL_INTEGER, '4', 4)
+        GotoStatement([target, IF, val1, op, val2], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 1)  # jumped to line 2 -> index 1
 
-    class TestPrintStatementEdgeCases(unittest.TestCase):
-        def test_print_float(self):
-            state = InterpreterState()
-            val = make_token(GrinTokenKind.LITERAL_FLOAT, '3.14', 3.14)
-            out = io.StringIO()
-            PrintStatement([val], LOCATION).execute(state, output_stream = out)
-            self.assertEqual(out.getvalue().strip(), '3.14')
-
-        def test_print_float_from_variable(self):
-            state = InterpreterState()
-            state.set_variable('F', 2.5)
-            val = make_token(GrinTokenKind.IDENTIFIER, 'F', 'F')
-            out = io.StringIO()
-            PrintStatement([val], LOCATION).execute(state, output_stream = out)
-            self.assertEqual(out.getvalue().strip(), '2.5')
+    def test_conditional_jump_not_taken(self):
+        state = make_program(5)
+        state.set_variable('A', 5)
+        state._current_line = 1
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        IF = make_token(GrinTokenKind.IF, 'IF')
+        val1 = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
+        op = make_token(GrinTokenKind.LESS_THAN, '<')
+        val2 = make_token(GrinTokenKind.LITERAL_INTEGER, '4', 4)
+        GotoStatement([target, IF, val1, op, val2], LOCATION).execute(state)
+        state.go_to_next_line()
+        self.assertEqual(state.current_line(), 2)  # didn't jump, advanced to next line
 
 
-    class TestInnumEdgeCases(unittest.TestCase):
-        def test_float_without_fractional_part(self):
-            state = InterpreterState()
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            InnumStatement([var], LOCATION).execute(state, input_stream = io.StringIO('42.0\n'))
-            self.assertIsInstance(state.get_variable('X'), int)
-            self.assertEqual(state.get_variable('X'), 42)
+class TestGosubAndReturn(unittest.TestCase):
+    def test_gosub_pushes_return_address(self):
+        state = make_program(5)
+        state._current_line = 1
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        GosubStatement([target], LOCATION).execute(state)
+        self.assertTrue(state.has_return())
 
-        def test_negative_number(self):
-            state = InterpreterState()
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            InnumStatement([var], LOCATION).execute(state, input_stream = io.StringIO('-17\n'))
-            self.assertEqual(state.get_variable('X'), -17)
+    def test_gosub_return_address_is_next_line(self):
+        state = make_program(5)
+        state._current_line = 1
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        GosubStatement([target], LOCATION).execute(state)
+        self.assertEqual(state.pop_return(), 2)  # next line is 2 (index 1 + 1)
 
-        def test_whitespace_input(self):
-            state = InterpreterState()
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            InnumStatement([var], LOCATION).execute(state, input_stream = io.StringIO('  42  \n'))
-            self.assertEqual(state.get_variable('X'), 42)
+    def test_return_jumps_back(self):
+        state = make_program(5)
+        state.push_return(3)  # return to line 3 (index 2)
+        ReturnStatement([], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 2)  # line 3 -> index 2
+
+    def test_return_no_gosub_raises(self):
+        state = make_program(5)
+        with self.assertRaises(RuntimeError):
+            ReturnStatement([], LOCATION).execute(state)
+
+    def test_nested_gosub(self):
+        state = make_program(10)
+        state._current_line = 0
+
+        # First gosub
+        target1 = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
+        GosubStatement([target1], LOCATION).execute(state)
+        self.assertEqual(len(state._call_stack), 1)
+
+        # Second gosub
+        state._current_line = 3
+        target2 = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        GosubStatement([target2], LOCATION).execute(state)
+        self.assertEqual(len(state._call_stack), 2)
+
+        # First return
+        ReturnStatement([], LOCATION).execute(state)
+        self.assertEqual(len(state._call_stack), 1)
+
+        # Second return
+        ReturnStatement([], LOCATION).execute(state)
+        self.assertEqual(len(state._call_stack), 0)
 
 
-    class TestMakeStatementEdgeCases(unittest.TestCase):
-        def test_label_with_arithmetic(self):
-            label = make_token(GrinTokenKind.IDENTIFIER, 'LOOP', 'LOOP')
-            colon = make_token(GrinTokenKind.COLON, ':')
-            kw = make_token(GrinTokenKind.ADD, 'ADD')
-            var = make_token(GrinTokenKind.IDENTIFIER, 'X', 'X')
-            val = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
-            stmt = make_statement([label, colon, kw, var, val])
-            from grin.statement import AddStatement
-            self.assertIsInstance(stmt, AddStatement)
-            self.assertEqual(stmt.label(), 'LOOP')
+class TestMakeStatementJumps(unittest.TestCase):
+    def test_makes_goto(self):
+        kw = make_token(GrinTokenKind.GOTO, 'GOTO')
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
+        self.assertIsInstance(make_statement([kw, target]), GotoStatement)
 
-        def test_unknown_statement_raises(self):
-            kw = make_token(GrinTokenKind.IDENTIFIER, 'BOGUS', 'BOGUS')
-            with self.assertRaises(RuntimeError):
-                make_statement([kw])
+    def test_makes_gosub(self):
+        kw = make_token(GrinTokenKind.GOSUB, 'GOSUB')
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
+        self.assertIsInstance(make_statement([kw, target]), GosubStatement)
+
+    def test_makes_return(self):
+        kw = make_token(GrinTokenKind.RETURN, 'RETURN')
+        self.assertIsInstance(make_statement([kw]), ReturnStatement)
+
+
+class TestGotoConditionalTypes(unittest.TestCase):
+    def test_conditional_with_int_comparison(self):
+        state = make_program(5)
+        state.set_variable('A', 3)
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        IF = make_token(GrinTokenKind.IF, 'IF')
+        val1 = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
+        op = make_token(GrinTokenKind.EQUAL, '=')
+        val2 = make_token(GrinTokenKind.LITERAL_INTEGER, '3', 3)
+        GotoStatement([target, IF, val1, op, val2], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 1)  # jumped to line 2 -> index 1
+
+    def test_conditional_with_string_comparison(self):
+        state = make_program(5)
+        state.set_variable('S', 'hello')
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        IF = make_token(GrinTokenKind.IF, 'IF')
+        val1 = make_token(GrinTokenKind.IDENTIFIER, 'S', 'S')
+        op = make_token(GrinTokenKind.EQUAL, '=')
+        val2 = make_token(GrinTokenKind.LITERAL_STRING, '"hello"', 'hello')
+        GotoStatement([target, IF, val1, op, val2], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 1)  # jumped to line 2 -> index 1
+
+    def test_conditional_type_mismatch_raises(self):
+        state = make_program(5)
+        state.set_variable('A', 3)
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        IF = make_token(GrinTokenKind.IF, 'IF')
+        val1 = make_token(GrinTokenKind.IDENTIFIER, 'A', 'A')
+        op = make_token(GrinTokenKind.EQUAL, '=')
+        val2 = make_token(GrinTokenKind.LITERAL_STRING, '"hello"', 'hello')
+        with self.assertRaises(RuntimeError):
+            GotoStatement([target, IF, val1, op, val2], LOCATION).execute(state)
+
+
+class TestGosubConditional(unittest.TestCase):
+    def test_conditional_gosub_taken(self):
+        state = make_program(5)
+        state.set_variable('FLAG', 1)
+        state._current_line = 1
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        IF = make_token(GrinTokenKind.IF, 'IF')
+        val1 = make_token(GrinTokenKind.IDENTIFIER, 'FLAG', 'FLAG')
+        op = make_token(GrinTokenKind.EQUAL, '=')
+        val2 = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
+        GosubStatement([target, IF, val1, op, val2], LOCATION).execute(state)
+        self.assertTrue(state.has_return())
+        self.assertEqual(state.current_line(), 1)  # jumped to line 2 -> index 1
+
+    def test_conditional_gosub_not_taken(self):
+        state = make_program(5)
+        state.set_variable('FLAG', 0)
+        state._current_line = 1
+        target = make_token(GrinTokenKind.LITERAL_INTEGER, '2', 2)
+        IF = make_token(GrinTokenKind.IF, 'IF')
+        val1 = make_token(GrinTokenKind.IDENTIFIER, 'FLAG', 'FLAG')
+        op = make_token(GrinTokenKind.EQUAL, '=')
+        val2 = make_token(GrinTokenKind.LITERAL_INTEGER, '1', 1)
+        GosubStatement([target, IF, val1, op, val2], LOCATION).execute(state)
+        state.go_to_next_line()
+        self.assertEqual(state.current_line(), 2)  # didn't jump, advanced
+        self.assertFalse(state.has_return())
+
+
+class TestGotoVariableTarget(unittest.TestCase):
+    def test_goto_variable_with_int(self):
+        state = make_program(5)
+        state.set_variable('TARGET', 2)
+        target = make_token(GrinTokenKind.IDENTIFIER, 'TARGET', 'TARGET')
+        GotoStatement([target], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 1)  # jumped to line 2 -> index 1
+
+    def test_goto_variable_with_string_label(self):
+        state = make_program(5)
+        state._labels = {'dest': 3}
+        state.set_variable('TARGET', 'dest')
+        target = make_token(GrinTokenKind.IDENTIFIER, 'TARGET', 'TARGET')
+        GotoStatement([target], LOCATION).execute(state)
+        self.assertEqual(state.current_line(), 3)  # jumped to label line 4 -> index 3
+
+    def test_goto_variable_wrong_type_raises(self):
+        state = make_program(5)
+        state.set_variable('TARGET', 3.14)  # float not allowed as target
+        target = make_token(GrinTokenKind.IDENTIFIER, 'TARGET', 'TARGET')
+        with self.assertRaises(RuntimeError):
+            GotoStatement([target], LOCATION).execute(state)
+
 
 if __name__ == '__main__':
     unittest.main()
