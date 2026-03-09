@@ -3,10 +3,10 @@
 # ICS 33 Winter 2026
 # Project 4: Still Looking for Something
 
+from input import read_input
 
 def main() -> None:
-    pass
-
+    read_input()
 
 if __name__ == '__main__':
     main()

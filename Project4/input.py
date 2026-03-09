@@ -1,11 +1,43 @@
+from pathlib import Path
 from grammar import Grammar, VariableSymbol, Rule, Option, TerminalSymbol
 
-def read_input():
-    user_input = input()
-    user_input.splitlines()
-    file_path = user_input[0]
-    num_sentences = user_input[1]
-    starting_variable_id = user_input[2]
-
-    starting_variable = VariableSymbol(starting_variable_id)
+def read_input() -> None:
+    file_path = Path(input())
+    num_sentences = int(input())
+    starting_variable = VariableSymbol(input())
     grammar = Grammar(starting_variable)
+
+    lines = []
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+    for i in range(len(lines)):
+        if len(lines[i].strip()) == 0:
+            continue
+
+        if lines[i].strip()[0] == '{':
+            add_rule(lines, i+1, grammar)
+
+def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
+    variable_id = lines[line_number]
+    variable = VariableSymbol(variable_id)
+    rule = Rule()
+
+    i = line_number + 1
+    while lines[i].strip() != '}':
+        symbols = lines[i].split()
+        weight = int(symbols[0])
+        symbols.pop(0)
+
+        for j in range(len(symbols)):
+            if symbols[j][0] == '[':
+                symbols[j] = VariableSymbol(symbols[j])
+            else:
+                symbols[j] = TerminalSymbol(symbols[j])
+
+        option = Option(tuple(symbols))
+        rule.add_option(weight, option)
+
+        i += 1
+
+    grammar.rules[variable] = rule
