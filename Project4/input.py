@@ -1,13 +1,16 @@
 from pathlib import Path
 from grammar import Grammar, VariableSymbol, Rule, Option, TerminalSymbol
+from input_reader import InputReader
 
-def read_input() -> tuple[Grammar, list[str], int]:
+def read_input(reader = None) -> tuple[Grammar, list[str], int]:
     """Read input and file to produce a Grammar, its lines, and sentence count."""
-    file_path = Path(input().strip())
-    num_sentences = int(input().strip())
-    starting_variable = VariableSymbol(input().strip())
+    if reader is None:
+        reader = InputReader()
+
+    file_path = Path(reader.read_line())
+    num_sentences = int(reader.read_line())
+    starting_variable = VariableSymbol(reader.read_line())
     grammar = Grammar(starting_variable)
-    lines = []
 
     with open(file_path, 'r') as f:
         lines = f.readlines()
