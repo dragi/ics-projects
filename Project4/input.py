@@ -18,6 +18,8 @@ def read_input() -> None:
         if lines[i].strip()[0] == '{':
             add_rule(lines, i+1, grammar)
 
+    grammar.print_grammar()
+
 def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
     variable_id = lines[line_number]
     variable = VariableSymbol(variable_id)
@@ -35,7 +37,8 @@ def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
             else:
                 symbols[j] = TerminalSymbol(symbols[j])
 
-        option = Option(tuple(symbols))
+        symbols = tuple(symbols)
+        option = Option(symbols)
         rule.add_option(weight, option)
 
         i += 1
