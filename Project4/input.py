@@ -2,9 +2,9 @@ from pathlib import Path
 from grammar import Grammar, VariableSymbol, Rule, Option, TerminalSymbol
 
 def read_input() -> None:
-    file_path = Path(input())
-    num_sentences = int(input())
-    starting_variable = VariableSymbol(input())
+    file_path = Path(input().strip())
+    num_sentences = int(input().strip())
+    starting_variable = VariableSymbol(input().strip())
     grammar = Grammar(starting_variable)
 
     lines = []
@@ -19,6 +19,7 @@ def read_input() -> None:
             add_rule(lines, i+1, grammar)
 
     grammar.print_grammar()
+    generate_grammar(grammar, num_sentences)
 
 def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
     variable_id = lines[line_number]
@@ -44,3 +45,10 @@ def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
         i += 1
 
     grammar.rules[variable] = rule
+
+def generate_grammar(grammar, num_times):
+    for i in range(num_times):
+        sentence = grammar.generate()
+        for symbol in sentence:
+            print(symbol, end=', ')
+        print()

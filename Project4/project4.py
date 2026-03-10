@@ -8,5 +8,6 @@ from input import read_input
 def main() -> None:
     read_input()
 
+
 if __name__ == '__main__':
     main()
