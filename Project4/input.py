@@ -2,6 +2,7 @@ from pathlib import Path
 from grammar import Grammar, VariableSymbol, Rule, Option, TerminalSymbol
 
 def read_input() -> tuple[Grammar, list[str], int]:
+    """Read input and file to produce a Grammar, its lines, and sentence count."""
     file_path = Path(input().strip())
     num_sentences = int(input().strip())
     starting_variable = VariableSymbol(input().strip())
@@ -14,6 +15,7 @@ def read_input() -> tuple[Grammar, list[str], int]:
     return grammar, lines, num_sentences
 
 def build_grammar(grammar: Grammar, lines: list[str], num_sentences: int) -> None:
+    """Parse rules from lines and print generated sentences."""
     for i in range(len(lines)):
         if len(lines[i].strip()) == 0:
             continue
@@ -24,6 +26,7 @@ def build_grammar(grammar: Grammar, lines: list[str], num_sentences: int) -> Non
     print_grammar(grammar, num_sentences)
 
 def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
+    """Parse one rule block and register it in the grammar."""
     variable_id = lines[line_number].strip()
     variable = VariableSymbol(variable_id)
     rule = Rule()
@@ -40,7 +43,6 @@ def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
             else:
                 symbols[j] = TerminalSymbol(symbols[j])
 
-        symbols = tuple(symbols)
         option = Option(symbols)
         rule.add_option(weight, option)
 
@@ -48,7 +50,8 @@ def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
 
     grammar.insert_rule(variable, rule)
 
-def print_grammar(grammar, num_times):
+def print_grammar(grammar: Grammar, num_times: int) -> None:
+    """Print num_times randomly generated sentences."""
     for i in range(num_times):
         sentence = list(grammar.generate())
         print(' '.join(sentence))

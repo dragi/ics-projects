@@ -148,5 +148,67 @@ class TestGrammar(unittest.TestCase):
 
         self.assertEqual(f.getvalue(), 'Boo is happy and happy today\n')
 
+    def test_empty_lines_ignored(self):
+        grammar = Grammar(VariableSymbol('HowIsBoo'))
+        lines = [
+            '',
+            '{', 'HowIsBoo', '1 Boo is happy', '}',
+            '',
+            '{', 'Adjective', '1 happy', '}',
+            ''
+        ]
+        num_sentences = 1
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            build_grammar(grammar, lines, num_sentences)
+
+        self.assertEqual(f.getvalue(), 'Boo is happy\n')
+
+    def test_duplicate_variable_overwrites(self):
+        grammar = Grammar(VariableSymbol('HowIsBoo'))
+        lines = [
+            '{', 'HowIsBoo', '1 sad', '}',
+            '{', 'HowIsBoo', '1 happy', '}',
+        ]
+        num_sentences = 1
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            build_grammar(grammar, lines, num_sentences)
+
+        self.assertEqual(f.getvalue(), 'happy\n')
+
+    def test_zero_weight_option(self):
+        grammar = Grammar(VariableSymbol('HowIsBoo'))
+        lines = [
+            '{', 'HowIsBoo', '0 sad', '10 happy', '}',
+        ]
+        num_sentences = 20
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            build_grammar(grammar, lines, num_sentences)
+
+        results = f.getvalue().strip().split('\n')
+        self.assertNotIn('sad', results)
+        self.assertTrue(all(r == 'happy' for r in results))
+
+    def test_deeply_nested_variables(self):
+        grammar = Grammar(VariableSymbol('A'))
+        lines = [
+            '{', 'A', '1 [B]', '}',
+            '{', 'B', '1 [C]', '}',
+            '{', 'C', '1 [D]', '}',
+            '{', 'D', '1 test', '}',
+        ]
+        num_sentences = 1
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            build_grammar(grammar, lines, num_sentences)
+
+        self.assertEqual(f.getvalue(), 'test\n')
+
 if __name__ == '__main__':
     unittest.main()
