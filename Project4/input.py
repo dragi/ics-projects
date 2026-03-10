@@ -46,7 +46,7 @@ def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
 
         i += 1
 
-    grammar.rules[variable] = rule
+    grammar.insert_rule(variable, rule)
 
 def print_grammar(grammar, num_times):
     for i in range(num_times):

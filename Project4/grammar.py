@@ -1,15 +1,18 @@
-from randomizer import Randomizer, FakeRandomizer
+from randomizer import Randomizer
 
 class Grammar:
     def __init__(self, start_variable: VariableSymbol):
         self._start_variable = start_variable
-        self.rules = dict()
+        self._rules = dict()
+
+    def insert_rule(self, variable: VariableSymbol, rule: Rule):
+        self._rules[variable] = rule
 
     def generate(self, randomizer=None):
         if randomizer is None:
             randomizer = Randomizer()
-        rule = self.rules[self._start_variable]
-        yield from rule.generate(self.rules, randomizer)
+        rule = self._rules[self._start_variable]
+        yield from rule.generate(self._rules, randomizer)
 
 class VariableSymbol:
     def __init__(self, variable_id):
