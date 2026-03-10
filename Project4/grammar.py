@@ -1,23 +1,15 @@
-import random
+from randomizer import Randomizer, FakeRandomizer
 
 class Grammar:
     def __init__(self, start_variable: VariableSymbol):
         self._start_variable = start_variable
         self.rules = dict()
 
-    def print_rules(self):
-        for variable, rule in self.rules.items():
-            print('Rule:', variable, end='')
-            for option in rule.options():
-                print('Option: ', end='')
-                for symbol in option.symbols():
-                    print(symbol, end=', ')
-                print()
-            print()
-
-    def generate(self):
+    def generate(self, randomizer=None):
+        if randomizer is None:
+            randomizer = Randomizer()
         rule = self.rules[self._start_variable]
-        yield from rule.generate(self.rules)
+        yield from rule.generate(self.rules, randomizer)
 
 class VariableSymbol:
     def __init__(self, variable_id):
@@ -37,11 +29,8 @@ class VariableSymbol:
     def __repr__(self):
         return self._variable_id
 
-    def variable_id(self):
-        print(self._variable_id)
-
-    def generate(self, rules):
-        yield from rules[self].generate(rules)
+    def generate(self, rules, randomizer):
+        yield from rules[self].generate(rules, randomizer)
 
 class Rule:
     def __init__(self):
@@ -51,25 +40,19 @@ class Rule:
         for i in range(weight):
             self._options.append(option)
 
-    def options(self):
-        return self._options
-
-    def generate(self, rules):
+    def generate(self, rules, randomizer):
         num_options = len(self._options) - 1
-        random_num = random.randint(0, num_options)
+        random_num = randomizer.randint(0, num_options)
         random_option = self._options[random_num]
-        yield from random_option.generate(rules)
+        yield from random_option.generate(rules, randomizer)
 
 class Option:
     def __init__(self, symbols):
         self._symbols = symbols
 
-    def symbols(self):
-        return self._symbols
-
-    def generate(self, rules):
+    def generate(self, rules, randomizer):
         for symbol in self._symbols:
-            yield from symbol.generate(rules)
+            yield from symbol.generate(rules, randomizer)
 
 class TerminalSymbol:
     def __init__(self, text):
@@ -81,5 +64,5 @@ class TerminalSymbol:
     def __repr__(self):
         return self._text
 
-    def generate(self, rules):
+    def generate(self, rules, randomizer):
         yield self._text
