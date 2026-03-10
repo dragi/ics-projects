@@ -69,10 +69,7 @@ class Option:
 
     def generate(self, rules):
         for symbol in self._symbols:
-            if isinstance(symbol, VariableSymbol):
-                yield from symbol.generate(rules)
-            else:
-                yield from symbol.generate()
+            yield from symbol.generate(rules)
 
 class TerminalSymbol:
     def __init__(self, text):
@@ -84,5 +81,5 @@ class TerminalSymbol:
     def __repr__(self):
         return self._text
 
-    def generate(self):
+    def generate(self, rules):
         yield self._text
