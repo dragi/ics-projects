@@ -5,7 +5,7 @@ class Grammar:
         self._start_variable = start_variable
         self.rules = dict()
 
-    def print_grammar(self):
+    def print_rules(self):
         for variable, rule in self.rules.items():
             print('Rule:', variable, end='')
             for option in rule.options():
