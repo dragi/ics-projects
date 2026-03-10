@@ -16,22 +16,32 @@ class Grammar:
             print()
 
     def generate(self):
-        print(self.rules.keys(), end = ', ')
         rule = self.rules[self._start_variable]
-        yield rule.generate(self.rules)
+        yield from rule.generate(self.rules)
 
 class VariableSymbol:
     def __init__(self, variable_id):
         self._variable_id = variable_id
 
-    def variable_id(self):
-        print(self._variable_id)
+    def __eq__(self, other):
+        if not isinstance(other, VariableSymbol):
+            return NotImplemented
+        return self._variable_id == other._variable_id
+
+    def __hash__(self):
+        return hash(self._variable_id)
 
     def __str__(self):
         return self._variable_id
 
+    def __repr__(self):
+        return self._variable_id
+
+    def variable_id(self):
+        print(self._variable_id)
+
     def generate(self, rules):
-        yield rules[self].generate(rules)
+        yield from rules[self].generate(rules)
 
 class Rule:
     def __init__(self):
@@ -48,7 +58,7 @@ class Rule:
         num_options = len(self._options) - 1
         random_num = random.randint(0, num_options)
         random_option = self._options[random_num]
-        yield random_option.generate(rules)
+        yield from random_option.generate(rules)
 
 class Option:
     def __init__(self, symbols):
@@ -58,21 +68,20 @@ class Option:
         return self._symbols
 
     def generate(self, rules):
-        output = []
         for symbol in self._symbols:
             if isinstance(symbol, VariableSymbol):
-                variable_symbol = symbol.generate(rules)
-                output.extend(variable_symbol)
+                yield from symbol.generate(rules)
             else:
-                terminal_symbol = symbol.generate()
-                output.append(terminal_symbol)
-        yield output
+                yield from symbol.generate()
 
 class TerminalSymbol:
     def __init__(self, text):
         self._text = text
 
     def __str__(self):
+        return self._text
+
+    def __repr__(self):
         return self._text
 
     def generate(self):

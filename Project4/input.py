@@ -22,7 +22,7 @@ def read_input() -> None:
     generate_grammar(grammar, num_sentences)
 
 def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
-    variable_id = lines[line_number]
+    variable_id = lines[line_number].strip()
     variable = VariableSymbol(variable_id)
     rule = Rule()
 
@@ -34,7 +34,7 @@ def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
 
         for j in range(len(symbols)):
             if symbols[j][0] == '[':
-                symbols[j] = VariableSymbol(symbols[j])
+                symbols[j] = VariableSymbol(symbols[j].strip('[]'))
             else:
                 symbols[j] = TerminalSymbol(symbols[j])
 
@@ -48,7 +48,7 @@ def add_rule(lines: list[str], line_number: int, grammar: Grammar) -> None:
 
 def generate_grammar(grammar, num_times):
     for i in range(num_times):
-        sentence = grammar.generate()
+        sentence = list(grammar.generate())
         for symbol in sentence:
-            print(symbol, end=', ')
+            print(symbol, end=' ')
         print()
